@@ -48,11 +48,11 @@ GameObject* WorldGeneration::GenerateChunk(int posX, int posY, int size, const W
 	int detailLevel = 4;
 	uint16_t octaves = 12;
 	float lacunarity = 1.85f;
-	float persistence = .6f;
+	float persistence = .5f;
 	float multiplier = 128.0f;
 	Mesh* mesh = new Mesh(Mesh::CreateFromAlgorithm(size, nSize, detailLevel,
 						  [&](float x, float y) -> float {
-							  return Mathf::SmoothOctaveNoise2D(x + posX * halfSize, y + posY * halfSize, 0, octaves, lacunarity, persistence) * multiplier;
+							  return Mathf::SmoothOctaveNoise2D(x + posX * halfSize, y + posY * halfSize, 1, octaves, lacunarity, persistence) * multiplier;
 						  },
 						  false)); // <-- disable buffer updating, can only be done on the main thread
 	mesh->Optimize();
