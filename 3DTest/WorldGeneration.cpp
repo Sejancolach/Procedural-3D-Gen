@@ -16,11 +16,12 @@ class GameObject;
 void WorldGeneration::GenerateWorld(void) { 
 	std::vector<std::future<GameObject*>> futures;
 	
-	int size = 4;
+	int size = 2;
+	int chunkSize = 16;
 
 	for(int x = -size; x < size; x++) {
 		for(int y = -size; y < size; y++) {
-			futures.push_back(std::move(std::async(std::launch::async, WorldGeneration::GenerateChunk, x, y, 16,*this)));
+			futures.push_back(std::move(std::async(std::launch::async, WorldGeneration::GenerateChunk, x, y, chunkSize,*this)));
 		}
 	}
 
@@ -45,14 +46,15 @@ GameObject* WorldGeneration::GenerateChunk(int posX, int posY, int size, const W
 
 	float nSize = 64.0f;
 	float halfSize = size / nSize;
-	int detailLevel = 4;
-	uint16_t octaves = 12;
-	float lacunarity = 1.85f;
-	float persistence = .5f;
+	int detailLevel = 8;
+	uint16_t octaves = 16;
+	uint32_t seed = 0x1754;
+	float lacunarity = 1.3754f;
+	float persistence = .7f;
 	float multiplier = 128.0f;
 	Mesh* mesh = new Mesh(Mesh::CreateFromAlgorithm(size, nSize, detailLevel,
 						  [&](float x, float y) -> float {
-							  return Mathf::SmoothOctaveNoise2D(x + posX * halfSize, y + posY * halfSize, 1, octaves, lacunarity, persistence) * multiplier;
+							  return Mathf::SmoothOctaveNoise2D(x + posX * halfSize, y + posY * halfSize, seed, octaves, lacunarity, persistence) * multiplier;
 						  },
 						  false)); // <-- disable buffer updating, can only be done on the main thread
 	mesh->Optimize();

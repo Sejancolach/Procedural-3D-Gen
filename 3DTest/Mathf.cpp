@@ -57,11 +57,15 @@ namespace Mathf {
 		float total = 0.0f;
 		float detail = 1.0f;
 		float amplitude = 1.0f;
+		float offsetX = 0.0f;
+		float offsetY = 0.0f;
 
 		for(int i = 0; i < octaves; i++) {
-			total += SmoothNoise2DF(x1 * detail, y1 * detail, seed) * amplitude;
+			total += SmoothNoise2DF((x1+offsetX) * detail, (y1+offsetY) * detail, seed) * amplitude;
 			detail *= lacunarity;
 			amplitude *= persistence;
+			offsetX += detail * amplitude;
+			offsetY += (lacunarity + offsetX) * amplitude;
 		}
 		total /= octaves;
 		return total;

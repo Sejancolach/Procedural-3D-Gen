@@ -66,7 +66,6 @@ Engine::Engine(int width, int height) {
 	this->height = height;
 
     this->InitOpenGL();
-    ;
 }
 
 void Engine::MainLoop(void) { 
@@ -112,6 +111,9 @@ void Engine::MainLoop(void) {
     // Initial Field of View
     float initialFoV = 60.0f;
 
+    float slowslowSpeed = 0.5f;
+    float slowSpeed = 5.0f;
+    float maxSpeed = 25.0f;
     float speed = 25.0f; // 3 units / second
     float mouseSpeed = 0.05f;
     float deltaTime = .0f;
@@ -174,6 +176,14 @@ void Engine::MainLoop(void) {
             glfwSetWindowTitle(window, newWindowTitle.c_str());
             fpscount = 0;
         }
+
+        if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+            speed = maxSpeed;
+        else if(glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS)
+            speed = slowSpeed;
+        else if(glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+            speed = slowslowSpeed;
+
     } // Check if the ESC key was pressed or the window was closed
     while(glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
           glfwWindowShouldClose(window) == 0);

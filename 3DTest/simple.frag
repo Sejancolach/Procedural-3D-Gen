@@ -33,6 +33,6 @@ void main(){
 	color = xDiff * blend.x + yDiff * blend.y + zDiff * blend.z;
 
 
-	color *= cosTheta;
+	color *= (cosTheta+.5f)*.666f;
 	//color = fragmentNormal;
 }

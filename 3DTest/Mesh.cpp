@@ -77,7 +77,7 @@ void Mesh::RecalculateNormals(void) {
 void Mesh::SmoothNormals(void) { 
 	static const float oneOverThree = 1.f / 3.f;
 	std::vector<glm::vec3> newNormals(normals);
-	for(int k = 0; k < 3; k++) {
+	for(int k = 0; k < 4; k++) {
 		for(int i = 0, j = 0; i < indices.size() / 3; i++) {
 			glm::vec3 smoothedNormal{0,0,0};
 			smoothedNormal += newNormals[indices[j]];
