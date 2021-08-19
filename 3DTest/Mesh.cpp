@@ -62,7 +62,7 @@ void Mesh::RecalculateNormals(void) {
 		glm::vec3 a = glm::vec3(vertices[indices[j] * 3], vertices[indices[j] * 3 + 1], vertices[indices[j] * 3 + 2]);
 		glm::vec3 b = glm::vec3(vertices[indices[j + 1] * 3], vertices[indices[j + 1] * 3 + 1], vertices[indices[j + 1] * 3 + 2]);
 		glm::vec3 c = glm::vec3(vertices[indices[j + 2] * 3], vertices[indices[j + 2] * 3 + 1], vertices[indices[j + 2] * 3 + 2]);
-		normalVector = (glm::cross(b - a, c - a));
+		normalVector = (glm::cross(a - b, c -b));
 		normals[indices[j]] += normalVector;
 		normals[indices[j + 1]] += normalVector;
 		normals[indices[j + 2]] += normalVector;
@@ -267,17 +267,44 @@ void AddVertices(std::vector<GLfloat>& nVert, float* v0, float* v1, float* v2) {
 Mesh Mesh::CreateFromAlgorithm(int dimension, int size, int detailLevel, std::function<float(float, float)> func, bool canUpdateBuffer) {
 	Mesh mesh;
 	mesh.CanUpdateBuffers = canUpdateBuffer;
-	std::vector<float> vertices(dimension * dimension * detailLevel * detailLevel * 12);
-	std::vector<uint16_t> indices;
+	std::vector<float> vertices((dimension * dimension + 1) * (detailLevel * detailLevel + 1) * 3);
 
 	bool dx = false;
 	float dl = 1.0f / detailLevel;
 	int i = 0;
 	int ox = 0;
-	float ovsize = 1.0f / size;
+	float noiseScale = 1.0f / size;
+	int oxsize = dimension * detailLevel;
+	std::vector<uint16_t> indices(oxsize * oxsize * 6);
+
+	for(float x = 0; x <= dimension; x += dl) {
+		for(float z = 0; z <= dimension; z += dl) {
+			float rx = x * noiseScale, rz = z * noiseScale, rdl = dl * noiseScale;
+			vertices[i] = x;
+			vertices[i + 1] = func(rx, rz);
+			vertices[i + 2] = z;
+			i += 3;
+		}
+	}
+	for(int ti = 0, vi = 0, y = 0; y < oxsize; y++, vi++) {
+		for(int x = 0; x < oxsize; x++, ti += 6, vi++) {
+			indices[ti] = vi;
+			indices[ti + 3] = indices[ti + 2] = vi + 1;
+			indices[ti + 4] = indices[ti + 1] = vi + oxsize + 1;
+			indices[ti + 5] = vi + oxsize + 2;
+		}
+	}
+
+
+	mesh.SetVertices(vertices);
+	mesh.SetIndices(indices);
+	mesh.RecalculateNormals();
+
+	return mesh;
+	//Generation for flat shaded mesh
 	for(float x = 0; x < dimension; x += dl) {
 		for(float z = 0; z < dimension; z += dl) {
-			float rx = x * ovsize, rz = z * ovsize, rdl = dl * ovsize;
+			float rx = x * noiseScale, rz = z * noiseScale, rdl = dl * noiseScale;
 			vertices[i] = x;
 			vertices[i + 1] = func(rx, rz);
 			vertices[i + 2] = z;

@@ -16,8 +16,8 @@ class GameObject;
 void WorldGeneration::GenerateWorld(void) { 
 	std::vector<std::future<GameObject*>> futures;
 	
-	int size = 2;
-	int chunkSize = 16;
+	int size = 16;
+	int chunkSize = 8;
 
 	for(int x = -size; x < size; x++) {
 		for(int y = -size; y < size; y++) {
@@ -34,7 +34,7 @@ void WorldGeneration::GenerateWorld(void) {
 		mRender->TextureID = textureID1;
 		mRender->TextureID2 = textureID2;
 	}
-
+	//TODO: smooth normals between chunk meshes 
 }
 
 GameObject* WorldGeneration::GenerateChunk(int posX, int posY, int size, const WorldGeneration& ref) { 
@@ -44,7 +44,7 @@ GameObject* WorldGeneration::GenerateChunk(int posX, int posY, int size, const W
 	mRender->TextureID = ref.textureID1;
 	mRender->TextureID2 = ref.textureID2;
 
-	float nSize = 64.0f;
+	float nSize = 64;
 	float halfSize = size / nSize;
 	int detailLevel = 8;
 	uint16_t octaves = 16;
@@ -57,13 +57,9 @@ GameObject* WorldGeneration::GenerateChunk(int posX, int posY, int size, const W
 							  return Mathf::SmoothOctaveNoise2D(x + posX * halfSize, y + posY * halfSize, seed, octaves, lacunarity, persistence) * multiplier;
 						  },
 						  false)); // <-- disable buffer updating, can only be done on the main thread
-	mesh->Optimize();
 	mesh->SmoothNormals();
-	chunk->transform->SetPosition(glm::vec3(posX * size, -4, posY * size));
+	chunk->transform->SetPosition(glm::vec3(posX * size, 0, posY * size));
 	mRender->mesh = mesh;
 	chunk->AddComponent(mRender);
 	return chunk;
-	//testMesh2 = Mesh::CreateFromAlgorithm(16, 2, 4, [&](float x, float y) -> float {return Mathf::SmoothNoise2DF(x + 8, y, 0); });
-	//testMesh2.Optimize();
-	//testMesh2.SmoothNormals();
 }

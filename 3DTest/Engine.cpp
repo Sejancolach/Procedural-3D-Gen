@@ -57,7 +57,7 @@ int Engine::InitOpenGL(void) {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     glEnable(GL_CULL_FACE);
-    glCullFace(GL_CW);
+    glCullFace(GL_FRONT);
     return 0;
 }
 

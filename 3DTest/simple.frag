@@ -17,12 +17,22 @@ void main(){
 	vec3 xDiff;
 	vec3 yDiff;
 	vec3 zDiff;
-	if (cosTheta > .9f){
+	if (cosTheta >= .9f){
 		xDiff = texture(TextureSampler1, xUV).rgb;
 		yDiff = texture(TextureSampler1, yUV).rgb;
 		zDiff = texture(TextureSampler1, zUV).rgb;
 	}	
-	else {
+	else if (cosTheta >= .8f){
+		float t = (cosTheta - 0.8f) * 10;		
+		xDiff = texture(TextureSampler1, xUV).rgb * t;
+		yDiff = texture(TextureSampler1, yUV).rgb * t;
+		zDiff = texture(TextureSampler1, zUV).rgb * t;
+		t = 1 - t;
+		xDiff += texture(TextureSampler2, xUV).rgb * t;
+		yDiff += texture(TextureSampler2, yUV).rgb * t;
+		zDiff += texture(TextureSampler2, zUV).rgb * t;
+	}
+	else{
 		xDiff = texture(TextureSampler2, xUV).rgb;
 		yDiff = texture(TextureSampler2, yUV).rgb;
 		zDiff = texture(TextureSampler2, zUV).rgb;
@@ -34,5 +44,5 @@ void main(){
 
 
 	color *= (cosTheta+.5f)*.666f;
-	//color = fragmentNormal;
+	//color = cosTheta * vec3(1,1,1);
 }
