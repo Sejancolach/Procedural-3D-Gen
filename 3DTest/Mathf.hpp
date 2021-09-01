@@ -1,5 +1,6 @@
 #pragma once
 #include <cmath>
+#include <glm/ext/vector_float2.hpp>
 
 namespace Mathf {
 	//constants
@@ -27,6 +28,9 @@ namespace Mathf {
 	uint32_t Noise4D(int32_t x, int32_t y, int32_t z, int32_t w, uint32_t seed);
 	float Noise4DF(int32_t x, int32_t y, int32_t z, int32_t w, uint32_t seed);
 
+	float CellularNoise2D(float px, float py, float scale, uint32_t seed);
+	glm::vec2 RandCell2DVector(int32_t x, int32_t y, uint32_t seed);
+	glm::vec2 RandCell2DVector(glm::vec2 point, uint32_t seed);
 
 	float NormalizeNoiseValue(uint32_t val);
 	float easeInOutCubic(float x);

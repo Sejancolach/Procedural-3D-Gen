@@ -295,10 +295,36 @@ Mesh Mesh::CreateFromAlgorithm(int dimension, int size, int detailLevel, std::fu
 		}
 	}
 
+	std::vector<glm::vec3> normals(vertices.size() / 3);
+
+	int nsize = sqrt( normals.size());
+	for(int i = 0; i < nsize; i++) {
+		const int npow = nsize * nsize;
+		normals[i] = glm::vec3(0, .05f, 0);
+		normals[npow - i - 1] = glm::vec3(0, .05f, 0);
+		normals[i * nsize] = glm::vec3(0, .05f, 0);
+		normals[(i+1) * nsize -1] = glm::vec3(0, .05f, 0);
+	}
+	for(int i = 0, j = 0; i < indices.size() / 3; i++) {
+		glm::vec3 normalVector;
+		glm::vec3 a = glm::vec3(vertices[indices[j] * 3], vertices[indices[j] * 3 + 1], vertices[indices[j] * 3 + 2]);
+		glm::vec3 b = glm::vec3(vertices[indices[j + 1] * 3], vertices[indices[j + 1] * 3 + 1], vertices[indices[j + 1] * 3 + 2]);
+		glm::vec3 c = glm::vec3(vertices[indices[j + 2] * 3], vertices[indices[j + 2] * 3 + 1], vertices[indices[j + 2] * 3 + 2]);
+		normalVector = (glm::cross(a - b, c - b));
+		normals[indices[j]] += normalVector;
+		normals[indices[j + 1]] += normalVector;
+		normals[indices[j + 2]] += normalVector;
+		j += 3;
+	}
+	for(int i = 0; i < vertices.size() / 3; i++) {
+		normals[i] = glm::normalize(normals[i]);
+	}
+
 
 	mesh.SetVertices(vertices);
 	mesh.SetIndices(indices);
-	mesh.RecalculateNormals();
+	mesh.SetNormals(normals);
+	//mesh.RecalculateNormals();
 
 	return mesh;
 	//Generation for flat shaded mesh

@@ -1,4 +1,5 @@
 #include "Mathf.hpp"
+#include <glm/geometric.hpp>
 
 namespace Mathf {
 	uint32_t Noise1D(int32_t x, uint32_t seed) {
@@ -49,7 +50,8 @@ namespace Mathf {
 		float yr = std::lerp(yS2, yS1, xDif);
 		float r = std::lerp(yr, xr, yDif);
 		r = (r + 1) / 2;
-		r = (easeInOutCirc(r) * 2) - 2;
+		r = (easeInOutCubic(r) * 2) - 2;
+		//r = (easeInOutCirc(r) * 2) - 2;
 		return r;
 	}
 
@@ -85,6 +87,34 @@ namespace Mathf {
 
 	float Noise4DF(int32_t x, int32_t y, int32_t z, int32_t w, uint32_t seed) {
 		return NormalizeNoiseValue(Noise4D(x, y, z, w, seed));
+	}
+
+	float CellularNoise2D(float px, float py, float scale, uint32_t seed) {
+		glm::vec2 point = glm::vec2(px, py) * scale;
+		glm::vec2 ipoint = glm::floor(point);
+		glm::vec2 fpoint = glm::fract(point);
+		float mdist = 1.0f;
+		for(int y = -1; y <= 1; y++) {
+			for(int x = -1; x <= 1; x++) {
+				glm::vec2 neighbor = glm::vec2(x, y);
+				glm::vec2 rpoint = RandCell2DVector(ipoint + neighbor, seed);
+				glm::vec2 diff = neighbor + rpoint - fpoint;
+				float dist = glm::length(diff);
+				mdist = std::min(mdist, dist);
+			}
+		}
+		return mdist;
+	}
+
+	glm::vec2 RandCell2DVector(int32_t x, int32_t y, uint32_t seed) {
+		return glm::fract(glm::vec2(
+			sin(glm::dot(glm::vec2(x, y), glm::vec2(127.1f, 311.7f))),
+			sin(glm::dot(glm::vec2(x, y), glm::vec2(269.5f, 183.3f)))
+			) * 43758.5453f);
+	}
+
+	glm::vec2 RandCell2DVector(glm::vec2 point, uint32_t seed) {
+		return RandCell2DVector(point.x, point.y, seed);
 	}
 
 	float NormalizeNoiseValue(uint32_t val) {

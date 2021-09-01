@@ -1,6 +1,7 @@
 #include "Engine.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/ext.hpp>
 #include <GL/GLU.h>
 #include <GL/glew.h>
 #include <string>
@@ -12,7 +13,7 @@
 #include "Shader.hpp"
 #include "Mathf.hpp"
 #include "SceneManager.hpp"
-#include "WorldGeneration.h"
+#include "WorldGeneration.hpp"
 
 class Transform;
 class util::Shader;
@@ -58,7 +59,7 @@ int Engine::InitOpenGL(void) {
     glDepthFunc(GL_LESS);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe Render
     return 0;
 }
 
@@ -104,11 +105,11 @@ void Engine::MainLoop(void) {
     // Our ModelViewProjection : multiplication of our 3 matrices
     glm::mat4 mvp = Projection * View * Model; // Remember, matrix multiplication is the other way around
     // position
-    glm::vec3 position = glm::vec3(0, 0, 5);
+    glm::vec3 position = glm::vec3(20, 40, 128);
     // horizontal angle : toward -Z
     float horizontalAngle = 3.14f;
     // vertical angle : 0, look at the horizon
-    float verticalAngle = 0.0f;
+    float verticalAngle = -.5f;
     // Initial Field of View
     float initialFoV = 60.0f;
 
@@ -121,9 +122,49 @@ void Engine::MainLoop(void) {
     int fpscount = 0;
     float currentFPS = 75.0f;
 
-    do {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    const float SHADOW_MAP_RESOLUTION = 2048;
 
+    //SHADOW MAPPING
+    GLuint ShadowFrameBuffer = 0;
+    glGenFramebuffers(1, &ShadowFrameBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, ShadowFrameBuffer);
+
+    GLuint ShadowRenderTexture = 0;
+    glGenTextures(1, &ShadowRenderTexture);
+    glBindTexture(GL_TEXTURE_2D, ShadowRenderTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_MAP_RESOLUTION, SHADOW_MAP_RESOLUTION, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+    
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, ShadowRenderTexture, 0);
+    glDrawBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    GLuint DepthShaderID = util::Shader::CompileShader("simpleDepthShader");
+    //GLuint depthMatrixID = glGetUniformLocation(DepthShaderID, "depthMVP");
+
+    //Render Quad
+    static const GLfloat g_quad_vertex_buffer_data[] = {
+    -1.0f,  1.0f, 0.0f,
+     1.0f, -1.0f, 0.0f,
+    -1.0f, -1.0f, 0.0f,
+     1.0f,  1.0f, 0.0f,
+     1.0f, -1.0f, 0.0f,
+    -1.0f,  1.0f, 0.0f,
+    };
+
+    GLuint quad_vertexbuffer;
+    glGenBuffers(1, &quad_vertexbuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, quad_vertexbuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(g_quad_vertex_buffer_data), g_quad_vertex_buffer_data, GL_STATIC_DRAW);
+    GLuint quad_programID = util::Shader::CompileShader("passthrough");
+    GLuint texID = glGetUniformLocation(quad_programID, "renderedTexture");
+
+    do {
         double currentTime = glfwGetTime();
         double xpos, ypos;
         glfwGetCursorPos(this->window, &xpos, &ypos);
@@ -157,12 +198,76 @@ void Engine::MainLoop(void) {
             up                  // Head is up (set to 0,-1,0 to look upside-down)
         );
 
-        glm::mat4 mvp = Projection * View * Model;
         
+
+
+        // Compute the MVP matrix from the light's point of view
+        const float dpmScale = 128;
+        glm::mat4 depthProjectionMatrix = glm::ortho<float>(-dpmScale, dpmScale, -dpmScale, dpmScale, -10, 512);
+        //glm::mat4 depthViewMatrix = glm::lookAt(lightInvDir, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+        glm::mat4 depthViewMatrix = glm::lookAt(
+            glm::vec3(40, 60, -128),
+            //glm::vec3(40, 60, 128) + glm::vec3(0.00139759236, -0.479425550, -0.877581477),
+            glm::vec3(0, 0, 0),
+            glm::vec3(0, 1, 0)
+        );
+        glm::mat4 depthModelMatrix = glm::mat4(1.0);
+        glm::mat4 depthMVP = depthProjectionMatrix * depthViewMatrix * depthModelMatrix;
+
+        glm::mat4 biasMatrix(
+            0.5, 0.0, 0.0, 0.0,
+            0.0, 0.5, 0.0, 0.0,
+            0.0, 0.0, 0.5, 0.0,
+            0.5, 0.5, 0.5, 1.0
+        );
+        glm::mat4 depthBiasMVP = biasMatrix * depthMVP;
+
+        glBindFramebuffer(GL_FRAMEBUFFER, ShadowFrameBuffer);
+        //glDrawBuffer(GL_FRONT);
+        glViewport(0, 0, SHADOW_MAP_RESOLUTION, SHADOW_MAP_RESOLUTION);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glUseProgram(DepthShaderID);
+        sceneManager.ShadowRender(depthMVP);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glDrawBuffer(GL_BACK);
+        glViewport(0, 0, width, height);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        glm::mat4 mvp = Projection * View * Model;
         //Update and Render Scene Objects
+        glActiveTexture(GL_TEXTURE8);
+        glBindTexture(GL_TEXTURE_2D, ShadowRenderTexture);
+        glUniform1i(glGetUniformLocation(programID,"shadowMap"), 8);
+        //glUniformMatrix4fv(glGetUniformLocation(programID, "LightBiasMVP"), 1, GL_FALSE, &depthBiasMVP[0][0]);
         sceneManager.Update();
-        sceneManager.Render(mvp);
+        sceneManager.Render(mvp, depthBiasMVP);
+        //sceneManager.ShadowRender(mvp);
         sceneManager.LateUpdate();
+
+        // render the shadowmap (DEBUG)
+        glViewport(0, 0, 256, 256);
+        glUseProgram(quad_programID);
+        glActiveTexture(GL_TEXTURE8);
+        glUniform1i(texID, 8);
+        glBindTexture(GL_TEXTURE_2D, ShadowRenderTexture);
+
+        // 1rst attribute buffer : vertices
+        glEnableVertexAttribArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, quad_vertexbuffer);
+        glVertexAttribPointer(
+            0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+            3,                  // size
+            GL_FLOAT,           // type
+            GL_FALSE,           // normalized?
+            0,                  // stride
+            (void*)0            // array buffer offset
+        );
+
+        // You have to disable GL_COMPARE_R_TO_TEXTURE above in order to see anything !
+        glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
+        glDisableVertexAttribArray(0);
+
 
         // Swap buffers
         glfwSwapBuffers(window);

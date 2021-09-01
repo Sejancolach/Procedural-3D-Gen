@@ -8,7 +8,7 @@
 #include <mutex>
 #include "Behaviour.hpp"
 #include <glm/gtc/matrix_transform.hpp>
-
+#include <GL/glew.h>
 
 namespace Component {
     class Component;
@@ -52,7 +52,8 @@ public:
     void SetParent(GameObject* newParent);
 
     void Update(void);
-    void Render(glm::mat4x4 mvp);
+    void Render(glm::mat4x4 mvp, glm::mat4 depthBiasMVP);
+    void ShadowRender(glm::mat4 mvp);
     void LateUpdate(void);
     void FixedUpdate(void);
 

@@ -68,6 +68,18 @@
     <None Include="simple.frag">
       <Filter>Resource Files\Shader</Filter>
     </None>
+    <None Include="simpleDepthShader.vert">
+      <Filter>Resource Files\Shader</Filter>
+    </None>
+    <None Include="simpleDepthShader.frag">
+      <Filter>Resource Files\Shader</Filter>
+    </None>
+    <None Include="passthrough.vert">
+      <Filter>Resource Files\Shader</Filter>
+    </None>
+    <None Include="passthrough.frag">
+      <Filter>Resource Files\Shader</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Object.hpp">
@@ -106,7 +118,7 @@
     <ClInclude Include="Time.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WorldGeneration.h">
+    <ClInclude Include="WorldGeneration.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

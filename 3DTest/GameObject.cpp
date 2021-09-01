@@ -67,16 +67,29 @@ void GameObject::Update(void) {
 	}
 }
 
-void GameObject::Render(glm::mat4x4 mvp) {
+void GameObject::Render(glm::mat4x4 mvp, glm::mat4 depthBiasMVP) {
 	if(!isActive) return; //if not active don't render object or children
 	Component::MeshRender* mRender = static_cast<Component::MeshRender*>(GetComponent<Component::MeshRender>());
 
 	if(mRender != nullptr) {
-		mRender->Render(mvp);
+		mRender->Render(mvp, depthBiasMVP);
 	}
 	//else if Different Renderer (Bone Mesh Renderer, 2DRenderer)
 	for(int i = 0; i < children.size(); i++){
-		children[i]->Render(mvp);
+		children[i]->Render(mvp, depthBiasMVP);
+	}
+}
+
+void GameObject::ShadowRender(glm::mat4 mvp) { 
+	if(!isActive) return; //if not active don't render object or children
+	Component::MeshRender* mRender = static_cast<Component::MeshRender*>(GetComponent<Component::MeshRender>());
+
+	if(mRender != nullptr) {
+		mRender->ShadowRender(mvp);
+	}
+	//else if Different Renderer (Bone Mesh Renderer, 2DRenderer)
+	for(int i = 0; i < children.size(); i++) {
+		children[i]->ShadowRender(mvp);
 	}
 }
 

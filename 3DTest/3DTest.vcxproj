@@ -169,8 +169,12 @@
     <ClCompile Include="WorldGeneration.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="passthrough.frag" />
+    <None Include="passthrough.vert" />
     <None Include="simple.frag" />
     <None Include="simple.vert" />
+    <None Include="simpleDepthShader.frag" />
+    <None Include="simpleDepthShader.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Behaviour.hpp" />
@@ -185,7 +189,7 @@
     <ClInclude Include="Shader.hpp" />
     <ClInclude Include="Time.hpp" />
     <ClInclude Include="Transform.hpp" />
-    <ClInclude Include="WorldGeneration.h" />
+    <ClInclude Include="WorldGeneration.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

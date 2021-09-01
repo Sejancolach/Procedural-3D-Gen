@@ -2,7 +2,7 @@
 #include "Component.hpp"
 #include "Mesh.hpp"
 #include <glm/glm.hpp>
-
+#include <GL/glew.h>
 class Mesh;
 namespace Component {
     class Component;
@@ -20,6 +20,7 @@ namespace Component {
         GLuint TextureID = 0;
         GLuint TextureID2 = 0;
         Mesh *mesh;
-        void Render(glm::mat4 mvp);
+        void Render(glm::mat4 mvp, glm::mat4 depthBiasMVP);
+        void ShadowRender(glm::mat4 mvp);
     };
 }

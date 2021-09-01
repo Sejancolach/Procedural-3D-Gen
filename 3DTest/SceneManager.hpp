@@ -1,4 +1,5 @@
 #pragma once
+#include <GL/glew.h>
 #include "GameObject.hpp"
 #include <mutex>
 class SceneManager { 
@@ -14,7 +15,8 @@ public:
 	//TODO: Object Deletion
 	void RemoveFromCurrentScene(GameObject* go);
 	void Update(void);
-	void Render(glm::mat4x4 mvp);
+	void Render(glm::mat4x4 mvp, glm::mat4 depthBiasMVP);
+	void ShadowRender(glm::mat4 mvp);
 	void LateUpdate(void);
 	void FixedUpdate(void);
 

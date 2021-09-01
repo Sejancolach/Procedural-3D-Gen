@@ -1,4 +1,4 @@
-#include "WorldGeneration.h"
+#include "WorldGeneration.hpp"
 #include "Mathf.hpp"
 #include "MeshRender.hpp"
 #include "Transform.hpp"
@@ -6,6 +6,8 @@
 #include <thread>
 #include <algorithm>
 #include <vector>
+#include <chrono>
+#include <iostream>
 
 namespace Component {
 	class Transform;
@@ -14,6 +16,7 @@ namespace Component {
 class GameObject;
 
 void WorldGeneration::GenerateWorld(void) { 
+	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 	std::vector<std::future<GameObject*>> futures;
 	
 	int size = 16;
@@ -26,7 +29,6 @@ void WorldGeneration::GenerateWorld(void) {
 	}
 
 	for(int i = 0; i < futures.size(); i++) {
-		//futures[i].wait();
 		chunks.push_back(futures[i].get());
 		Component::MeshRender* mRender = static_cast<Component::MeshRender*>(chunks[i]->GetComponent<Component::MeshRender>());
 		mRender->mesh->UpdateBuffers(); // Buffers can only be Updated on the main thread
@@ -34,6 +36,9 @@ void WorldGeneration::GenerateWorld(void) {
 		mRender->TextureID = textureID1;
 		mRender->TextureID2 = textureID2;
 	}
+	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+	std::cout << " time to Generate World -> " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "mrs\t" <<
+			std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" <<std::endl;
 	//TODO: smooth normals between chunk meshes 
 }
 
@@ -44,19 +49,25 @@ GameObject* WorldGeneration::GenerateChunk(int posX, int posY, int size, const W
 	mRender->TextureID = ref.textureID1;
 	mRender->TextureID2 = ref.textureID2;
 
-	float nSize = 64;
+	float nSize = 128;
 	float halfSize = size / nSize;
 	int detailLevel = 8;
-	uint16_t octaves = 16;
+	uint16_t octaves = 24;
 	uint32_t seed = 0x1754;
-	float lacunarity = 1.3754f;
-	float persistence = .7f;
-	float multiplier = 128.0f;
+	float lacunarity = 1.354f;
+	//float lacunarity = 1.3754f;
+	float persistence = .75f;
+	float multiplier = 192.0f;
 	Mesh* mesh = new Mesh(Mesh::CreateFromAlgorithm(size, nSize, detailLevel,
 						  [&](float x, float y) -> float {
 							  return Mathf::SmoothOctaveNoise2D(x + posX * halfSize, y + posY * halfSize, seed, octaves, lacunarity, persistence) * multiplier;
 						  },
 						  false)); // <-- disable buffer updating, can only be done on the main thread
+	//Mesh* mesh = new Mesh(Mesh::CreateFromAlgorithm(size, nSize, detailLevel,
+	//					  [&](float x, float y) -> float {
+	//						  return Mathf::CellularNoise2D((x + posX), (y + posY), 1.0f,seed) * 4;
+	//					  },
+	//					  false)); // <-- disable buffer updating, can only be done on the main thread
 	mesh->SmoothNormals();
 	chunk->transform->SetPosition(glm::vec3(posX * size, 0, posY * size));
 	mRender->mesh = mesh;
