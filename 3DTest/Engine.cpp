@@ -1,4 +1,4 @@
-#include "Engine.hpp"
+﻿#include "Engine.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/ext.hpp>
@@ -24,6 +24,20 @@ namespace Component {
 }
 
 GLuint loadBMP(std::string imagePath);
+
+void GLAPIENTRY
+MessageCallback(GLenum source,
+                GLenum type,
+                GLuint id,
+                GLenum severity,
+                GLsizei length,
+                const GLchar* message,
+                const void* userParam) {
+    fprintf(stderr, "  => GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
+            (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""),
+            type, severity, message);
+}
+
 
 int Engine::InitOpenGL(void) { 
     // Initialise GLFW
@@ -59,6 +73,13 @@ int Engine::InitOpenGL(void) {
     glDepthFunc(GL_LESS);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
+    glEnable(GL_ARB_framebuffer_object);
+    
+    // ENABLE DEBUG OUTPUT
+
+    //glEnable(GL_DEBUG_OUTPUT);
+    //glDebugMessageCallback(MessageCallback, 0);
+
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe Render
     return 0;
 }
@@ -122,9 +143,34 @@ void Engine::MainLoop(void) {
     int fpscount = 0;
     float currentFPS = 75.0f;
 
-    const float SHADOW_MAP_RESOLUTION = 2048;
+    //Main Camera Render Texture
+    GLuint MainCameraFrameBuffer = 0 ;
+    glGenFramebuffers(1, &MainCameraFrameBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, MainCameraFrameBuffer);
+
+    GLuint MainCameraRenderTexture = 0;
+    glGenTextures(1, &MainCameraRenderTexture);
+    glBindTexture(GL_TEXTURE_2D, MainCameraRenderTexture);
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_BGR, GL_FLOAT, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+    
+    GLuint DepthRenderBuffer = 0;
+    glGenRenderbuffers(1, &DepthRenderBuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, DepthRenderBuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, DepthRenderBuffer);
+
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, MainCameraRenderTexture, 0);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     //SHADOW MAPPING
+    const float SHADOW_MAP_RESOLUTION = 2048;
     GLuint ShadowFrameBuffer = 0;
     glGenFramebuffers(1, &ShadowFrameBuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, ShadowFrameBuffer);
@@ -222,37 +268,44 @@ void Engine::MainLoop(void) {
         );
         glm::mat4 depthBiasMVP = biasMatrix * depthMVP;
 
+        //   ----------------
+        //   === RENDERIN ===
+        //   ----------------
+        
+        glDepthFunc(GL_LESS);
+
+        //   -- SHADOW MAP RENDER -- 
         glBindFramebuffer(GL_FRAMEBUFFER, ShadowFrameBuffer);
-        //glDrawBuffer(GL_FRONT);
         glViewport(0, 0, SHADOW_MAP_RESOLUTION, SHADOW_MAP_RESOLUTION);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glUseProgram(DepthShaderID);
         sceneManager.ShadowRender(depthMVP);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glDrawBuffer(GL_BACK);
+        //   -- MAIN CAMERA RENDER -- 
+        glBindFramebuffer(GL_FRAMEBUFFER, MainCameraFrameBuffer);
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glm::mat4 mvp = Projection * View * Model;
-        //Update and Render Scene Objects
         glActiveTexture(GL_TEXTURE8);
         glBindTexture(GL_TEXTURE_2D, ShadowRenderTexture);
         glUniform1i(glGetUniformLocation(programID,"shadowMap"), 8);
-        //glUniformMatrix4fv(glGetUniformLocation(programID, "LightBiasMVP"), 1, GL_FALSE, &depthBiasMVP[0][0]);
         sceneManager.Update();
         sceneManager.Render(mvp, depthBiasMVP);
-        //sceneManager.ShadowRender(mvp);
         sceneManager.LateUpdate();
 
-        // render the shadowmap (DEBUG)
-        glViewport(0, 0, 256, 256);
+
+        // RENDER THE SCENE 
+        glDepthFunc(GL_ALWAYS);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        glDrawBuffer(GL_BACK);
+        glViewport(0, 0, width, height);
         glUseProgram(quad_programID);
         glActiveTexture(GL_TEXTURE8);
         glUniform1i(texID, 8);
-        glBindTexture(GL_TEXTURE_2D, ShadowRenderTexture);
-
-        // 1rst attribute buffer : vertices
+        glBindTexture(GL_TEXTURE_2D, MainCameraRenderTexture);
         glEnableVertexAttribArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, quad_vertexbuffer);
         glVertexAttribPointer(
@@ -263,9 +316,16 @@ void Engine::MainLoop(void) {
             0,                  // stride
             (void*)0            // array buffer offset
         );
+        
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
-        // You have to disable GL_COMPARE_R_TO_TEXTURE above in order to see anything !
-        glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
+        // render the shadowmap (DEBUG)
+
+        glViewport(0, 0, 256, 256);
+        glActiveTexture(GL_TEXTURE8);
+        glUniform1i(texID, 8);
+        glBindTexture(GL_TEXTURE_2D, ShadowRenderTexture);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
         glDisableVertexAttribArray(0);
 
 

@@ -25,6 +25,9 @@
     <Filter Include="Resource Files\textures">
       <UniqueIdentifier>{2256f43b-1425-46d2-849e-ce1f55d83468}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\Shader\PostProcess">
+      <UniqueIdentifier>{5e191272-163c-428f-b29d-336a5d57bb46}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -79,6 +82,12 @@
     </None>
     <None Include="passthrough.frag">
       <Filter>Resource Files\Shader</Filter>
+    </None>
+    <None Include="VolumetricScattering.vert">
+      <Filter>Resource Files\Shader\PostProcess</Filter>
+    </None>
+    <None Include="VolumetricScattering.frag">
+      <Filter>Resource Files\Shader\PostProcess</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

@@ -175,6 +175,8 @@
     <None Include="simple.vert" />
     <None Include="simpleDepthShader.frag" />
     <None Include="simpleDepthShader.vert" />
+    <None Include="VolumetricScattering.frag" />
+    <None Include="VolumetricScattering.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Behaviour.hpp" />
