@@ -169,6 +169,10 @@
     <ClCompile Include="WorldGeneration.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="DeferredLightningPass.frag" />
+    <None Include="DeferredLightningPass.vert" />
+    <None Include="gBuffer.frag" />
+    <None Include="gBuffer.vert" />
     <None Include="passthrough.frag" />
     <None Include="passthrough.vert" />
     <None Include="simple.frag" />

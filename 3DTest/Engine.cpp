@@ -100,6 +100,7 @@ void Engine::MainLoop(void) {
     glBindVertexArray(VertexArrayID);
 
     GLuint programID = util::Shader::GetDefaultShader();
+    programID = util::Shader::CompileShader("gBuffer");
 
     GLuint MatrixID = glGetUniformLocation(programID, "MVP");
 
@@ -135,39 +136,71 @@ void Engine::MainLoop(void) {
     float initialFoV = 60.0f;
 
     float slowslowSpeed = 0.5f;
-    float slowSpeed = 5.0f;
-    float maxSpeed = 25.0f;
-    float speed = 25.0f; // 3 units / second
+    float slowSpeed = 10.0f;
+    float maxSpeed = 100.0f;
+    float speed = 100.0f;
     float mouseSpeed = 0.05f;
     float deltaTime = .0f;
     int fpscount = 0;
     float currentFPS = 75.0f;
 
-    //Main Camera Render Texture
-    GLuint MainCameraFrameBuffer = 0 ;
-    glGenFramebuffers(1, &MainCameraFrameBuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, MainCameraFrameBuffer);
+    //              ------------------------
+    //              === DEFERRED SHADING ===
+    //              ------------------------
 
-    GLuint MainCameraRenderTexture = 0;
-    glGenTextures(1, &MainCameraRenderTexture);
-    glBindTexture(GL_TEXTURE_2D, MainCameraRenderTexture);
-    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_BGR, GL_FLOAT, 0);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    GLuint gBuffer = 0;
+    glGenFramebuffers(1, &gBuffer);
+    glBindBuffer(GL_FRAMEBUFFER, gBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+    GLuint gPosition, gNormal, gColor;
+    // - position
+    glGenTextures(1, &gPosition);
+    glBindTexture(GL_TEXTURE_2D, gPosition);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
-    
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
+
+    // - normal
+    glGenTextures(1, &gNormal);
+    glBindTexture(GL_TEXTURE_2D, gNormal);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
+
+    // - color
+    glGenTextures(1, &gColor);
+    glBindTexture(GL_TEXTURE_2D, gColor);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gColor, 0);
+
+    unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+    glDrawBuffers(3, attachments);
+
     GLuint DepthRenderBuffer = 0;
     glGenRenderbuffers(1, &DepthRenderBuffer);
     glBindRenderbuffer(GL_RENDERBUFFER, DepthRenderBuffer);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, DepthRenderBuffer);
 
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, MainCameraRenderTexture, 0);
-    glDrawBuffer(GL_COLOR_ATTACHMENT0);
+    
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        printf("Framebuffer not complete!!!!!\n");
+    }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 
     //SHADOW MAPPING
     const float SHADOW_MAP_RESOLUTION = 2048;
@@ -209,6 +242,33 @@ void Engine::MainLoop(void) {
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_quad_vertex_buffer_data), g_quad_vertex_buffer_data, GL_STATIC_DRAW);
     GLuint quad_programID = util::Shader::CompileShader("passthrough");
     GLuint texID = glGetUniformLocation(quad_programID, "renderedTexture");
+    glUniform1i(texID, 0);
+
+    // -- LIGHTNING --
+    const uint32_t NR_LIGHTS = 255;
+    std::vector<glm::vec3> lightPos;
+    std::vector<glm::vec3> lightCol;
+
+    for(uint16_t i = 0; i < NR_LIGHTS; i++) {
+        const uint16_t seed = 0x4571;
+        float x = Mathf::Noise1DF(i,seed) * 128;
+        float y = Mathf::Noise1DF(i * 42,seed) * 8 - 48;
+        float z = Mathf::Noise1DF(i * 13,seed) * 128;
+        lightPos.push_back(glm::vec3(x, y, z));
+        x = (Mathf::Noise1DF(i * 7, seed)+1) * .25f + .5f;
+        y = (Mathf::Noise1DF(i * 11, seed)+1) * .25f + .5f;
+        z = (Mathf::Noise1DF(i * 21, seed)+1) * .25f + .5f;
+        //x = 1.0f;
+        //y = .2f;
+        //z = .2f;
+        lightCol.push_back(glm::vec3(x, y, z));
+    }
+
+    GLuint DeferredLightningPassID = util::Shader::CompileShader("DeferredLightningPass");
+    glUseProgram(DeferredLightningPassID);
+    glUniform1i(glGetUniformLocation(DeferredLightningPassID,"gPosition"), 0);
+    glUniform1i(glGetUniformLocation(DeferredLightningPassID,"gNormal"), 1);
+    glUniform1i(glGetUniformLocation(DeferredLightningPassID,"gColor"), 2);
 
     do {
         double currentTime = glfwGetTime();
@@ -244,8 +304,6 @@ void Engine::MainLoop(void) {
             up                  // Head is up (set to 0,-1,0 to look upside-down)
         );
 
-        
-
 
         // Compute the MVP matrix from the light's point of view
         const float dpmScale = 128;
@@ -268,44 +326,82 @@ void Engine::MainLoop(void) {
         );
         glm::mat4 depthBiasMVP = biasMatrix * depthMVP;
 
-        //   ----------------
-        //   === RENDERIN ===
-        //   ----------------
+        //   -----------------
+        //   === RENDERING ===
+        //   -----------------
         
         glDepthFunc(GL_LESS);
 
         //   -- SHADOW MAP RENDER -- 
-        glBindFramebuffer(GL_FRAMEBUFFER, ShadowFrameBuffer);
-        glViewport(0, 0, SHADOW_MAP_RESOLUTION, SHADOW_MAP_RESOLUTION);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glUseProgram(DepthShaderID);
-        sceneManager.ShadowRender(depthMVP);
+        //glBindFramebuffer(GL_FRAMEBUFFER, ShadowFrameBuffer);
+        //glViewport(0, 0, SHADOW_MAP_RESOLUTION, SHADOW_MAP_RESOLUTION);
+        //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        //glUseProgram(DepthShaderID);
+        //sceneManager.ShadowRender(depthMVP);
 
         //   -- MAIN CAMERA RENDER -- 
-        glBindFramebuffer(GL_FRAMEBUFFER, MainCameraFrameBuffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+        glm::mat4 mvp = Projection * View * Model;
+
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glm::mat4 mvp = Projection * View * Model;
-        glActiveTexture(GL_TEXTURE8);
-        glBindTexture(GL_TEXTURE_2D, ShadowRenderTexture);
-        glUniform1i(glGetUniformLocation(programID,"shadowMap"), 8);
+
         sceneManager.Update();
-        sceneManager.Render(mvp, depthBiasMVP);
+        sceneManager.Render(mvp,depthBiasMVP);
         sceneManager.LateUpdate();
 
-
-        // RENDER THE SCENE 
-        glDepthFunc(GL_ALWAYS);
+        //   -- Deferred Lightning Pass --
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glUseProgram(DeferredLightningPassID);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, gPosition);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, gNormal);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, gColor);
 
-        glDrawBuffer(GL_BACK);
+        for(uint16_t i = 0; i < NR_LIGHTS; i++) {
+            glUniform3fv(glGetUniformLocation(DeferredLightningPassID, ("lights[" + std::to_string(i) + "].Position").c_str()), 1, &lightPos[i][0]);
+            glUniform3fv(glGetUniformLocation(DeferredLightningPassID, ("lights[" + std::to_string(i) + "].Color").c_str()), 1, &lightCol[i][0]);
+            const float linear = .05f;
+            const float quadratic = .1f;
+            glUniform1f(glGetUniformLocation(DeferredLightningPassID, ("lights[" + std::to_string(i) + "].Linear").c_str()), linear);
+            glUniform1f(glGetUniformLocation(DeferredLightningPassID, ("lights[" + std::to_string(i) + "].Quadratic").c_str()), quadratic);
+        }
+        glUniform3fv(glGetUniformLocation(DeferredLightningPassID, "viewPos"), 1, &position[0]);
+
+        glEnableVertexAttribArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, quad_vertexbuffer);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glDisableVertexAttribArray(0);
+
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+        glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        //glActiveTexture(GL_TEXTURE8);
+        //glBindTexture(GL_TEXTURE_2D, ShadowRenderTexture);
+        //glUniform1i(glGetUniformLocation(programID,"shadowMap"), 3);
+        //sceneManager.Render(mvp, depthBiasMVP);
+
+        //   -- RENDER THE SCENE --
+        glDepthFunc(GL_ALWAYS);
+
+        //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, width, height);
+        //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        //glDrawBuffer(GL_BACK);
+
         glUseProgram(quad_programID);
-        glActiveTexture(GL_TEXTURE8);
-        glUniform1i(texID, 8);
-        glBindTexture(GL_TEXTURE_2D, MainCameraRenderTexture);
+        glUniformMatrix4fv(glGetUniformLocation(quad_programID, "MVP"), 1, GL_FALSE, &glm::mat4(1.0f)[0][0]);
+        glActiveTexture(GL_TEXTURE0);
+
+        glBindTexture(GL_TEXTURE_2D, gColor);
         glEnableVertexAttribArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, quad_vertexbuffer);
         glVertexAttribPointer(
@@ -317,17 +413,31 @@ void Engine::MainLoop(void) {
             (void*)0            // array buffer offset
         );
         
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        //glDrawArrays(GL_TRIANGLES, 0, 6);
 
         // render the shadowmap (DEBUG)
 
         glViewport(0, 0, 256, 256);
-        glActiveTexture(GL_TEXTURE8);
-        glUniform1i(texID, 8);
-        glBindTexture(GL_TEXTURE_2D, ShadowRenderTexture);
+        glBindTexture(GL_TEXTURE_2D, gPosition);
         glDrawArrays(GL_TRIANGLES, 0, 6);
+        glViewport(256, 0, 256, 256);
+        glBindTexture(GL_TEXTURE_2D, gNormal);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glViewport(512, 0, 256, 256);
+        glBindTexture(GL_TEXTURE_2D, gColor);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glDepthFunc(GL_LESS);
+        //glViewport(0, 0, width, height);
+        //glBindTexture(GL_TEXTURE_2D, textureID);
+        //for(uint16_t i = 0; i < NR_LIGHTS; i++) {
+        //    glm::mat4 xModel = glm::mat4(1.0f);
+        //    xModel = glm::translate(xModel, lightPos[i]);
+        //    xModel = glm::scale(xModel, glm::vec3(2.0f));
+        //    glm::mat4 xMVP = Projection * View * xModel;
+        //    glUniformMatrix4fv(glGetUniformLocation(quad_programID, "MVP"), 1, GL_FALSE, &xMVP[0][0]);
+        //    glDrawArrays(GL_TRIANGLES, 0, 6);
+        //}
         glDisableVertexAttribArray(0);
-
 
         // Swap buffers
         glfwSwapBuffers(window);

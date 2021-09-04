@@ -89,6 +89,18 @@
     <None Include="VolumetricScattering.frag">
       <Filter>Resource Files\Shader\PostProcess</Filter>
     </None>
+    <None Include="gBuffer.frag">
+      <Filter>Resource Files\Shader</Filter>
+    </None>
+    <None Include="gBuffer.vert">
+      <Filter>Resource Files\Shader</Filter>
+    </None>
+    <None Include="DeferredLightningPass.vert">
+      <Filter>Resource Files\Shader\PostProcess</Filter>
+    </None>
+    <None Include="DeferredLightningPass.frag">
+      <Filter>Resource Files\Shader\PostProcess</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Object.hpp">

@@ -14,8 +14,8 @@ void Component::MeshRender::Render(glm::mat4 mvp, glm::mat4 depthBiasMVP) {
         Texture2Location = glGetUniformLocation(ShaderID, "TextureSampler2");
 
         glUseProgram(ShaderID);
-        glUniform1i(Texture1Location, 1);
-        glUniform1i(Texture2Location, 2);
+        glUniform1i(Texture1Location, 8);
+        glUniform1i(Texture2Location, 9);
     }
     mvp = mvp * gameObject->transform->getMatrix();
     depthBiasMVP = depthBiasMVP * gameObject->transform->getMatrix();
@@ -24,7 +24,7 @@ void Component::MeshRender::Render(glm::mat4 mvp, glm::mat4 depthBiasMVP) {
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, mesh->vertexBuffer);
     glVertexAttribPointer(
-        0,                  // attribute 0 vertex Position
+        0,                  // attribute 0 vertex Position 
         3,                  // size
         GL_FLOAT,           // type
         GL_FALSE,           // normalized?
@@ -38,10 +38,10 @@ void Component::MeshRender::Render(glm::mat4 mvp, glm::mat4 depthBiasMVP) {
     glUniform3f(glGetUniformLocation(ShaderID, "worldPosition"), pos.x, pos.y, pos.z);
   
     if(!mesh->normals.empty()) {
-        glEnableVertexAttribArray(2);
+        glEnableVertexAttribArray(1);
         glBindBuffer(GL_ARRAY_BUFFER, mesh->normalBuffer);
         glVertexAttribPointer(
-            2,              // attribute 2 vertex Normal
+            1,              // attribute 1 vertex Normal
             3,              // size
             GL_FLOAT,       // type
             GL_TRUE,        // normalized
@@ -49,9 +49,9 @@ void Component::MeshRender::Render(glm::mat4 mvp, glm::mat4 depthBiasMVP) {
             (void*)0        // offset
         );
     }
-    glActiveTexture(GL_TEXTURE1);
+    glActiveTexture(GL_TEXTURE8);
     glBindTexture(GL_TEXTURE_2D, TextureID);
-    glActiveTexture(GL_TEXTURE2);
+    glActiveTexture(GL_TEXTURE9);
     glBindTexture(GL_TEXTURE_2D, TextureID2);
 
     if(mesh->indices.empty()) {

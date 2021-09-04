@@ -3,7 +3,7 @@
 in vec2 UV;
 
 out vec4 color;
-layout(location = 8) uniform sampler2D renderedTexture;
+layout(location = 0) uniform sampler2D renderedTexture;
 
 void main(){
     color = texture( renderedTexture, UV);

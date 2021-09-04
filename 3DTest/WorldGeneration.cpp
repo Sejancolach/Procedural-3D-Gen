@@ -53,11 +53,11 @@ GameObject* WorldGeneration::GenerateChunk(int posX, int posY, int size, const W
 	float halfSize = size / nSize;
 	int detailLevel = 8;
 	uint16_t octaves = 24;
-	uint32_t seed = 0x1754;
+	uint32_t seed = 0x154;
 	float lacunarity = 1.354f;
 	//float lacunarity = 1.3754f;
-	float persistence = .75f;
-	float multiplier = 192.0f;
+	float persistence = .775f;
+	float multiplier = 256.0f;
 	Mesh* mesh = new Mesh(Mesh::CreateFromAlgorithm(size, nSize, detailLevel,
 						  [&](float x, float y) -> float {
 							  return Mathf::SmoothOctaveNoise2D(x + posX * halfSize, y + posY * halfSize, seed, octaves, lacunarity, persistence) * multiplier;
