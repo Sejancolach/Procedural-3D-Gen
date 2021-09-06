@@ -7,13 +7,26 @@ layout (location = 2) out vec3 gColor;
 in vec3 fragNormal;
 in vec3 fragNormalWS;
 in vec3 fragPos;
+in vec4 ShadowCoord;
 
+layout (location = 7) uniform sampler2DShadow shadowMap;
 layout (location = 8) uniform sampler2D TextureSampler1;
 layout (location = 9) uniform sampler2D TextureSampler2;
+
+
+const vec2 poissonDisk[4] = vec2[](
+  vec2( -0.94201624, -0.39906216 ),
+  vec2( 0.94558609, -0.76890725 ),
+  vec2( -0.094184101, -0.92938870 ),
+  vec2( 0.34495938, 0.29387760 )
+);
+
+const float poissonDiskBias = 0.00008138020833  ;
 
 void main(){
 	float cosTheta = clamp(dot(fragNormal,vec3(0,1,0)),0,1);
 	float bias = 0.005f*tan(acos(cosTheta));
+	bias = clamp(bias,0,0.01);
 	vec2 xUV = fragNormalWS.zy;
 	vec2 yUV = fragNormalWS.xz;
 	vec2 zUV = fragNormalWS.xy;
@@ -48,4 +61,13 @@ void main(){
 	gPositionDepth = fragPos;
 	gColor = xDiff * blend.x + yDiff * blend.y + zDiff * blend.z;
 	gNormal = fragNormal;
+
+	//Apply Shadow map
+	float visibility = 1.0f;
+	for (int i=0;i<4;i++){
+	  if ( texture( shadowMap, vec3(ShadowCoord.xy + poissonDisk[i] * poissonDiskBias , (ShadowCoord.z - bias)/ShadowCoord.w)) < .5f){
+		visibility-=0.15;
+	  }
+	}
+	gColor *= visibility;
 }

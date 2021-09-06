@@ -23,7 +23,7 @@ void main(){
 	vec3 Normal  = texture(gNormal, TexCoords).xyz;
 	vec3 Diffuse = texture(gColor, TexCoords).rgb;
 
-	vec3 lightning = Diffuse * .2;
+	vec3 lightning = Diffuse * .8f;
 	vec3 viewDir = normalize(viewPos - FragPos);
 	for (int i = 0; i < NR_LIGHTS; i++){
 		vec3 lightDir = normalize(lights[i].Position - FragPos);

@@ -14,6 +14,8 @@ namespace Component {
         GLuint Texture1Location = 0;
         GLuint Texture2Location = 0;
 
+        bool IsVisibleToCamera(glm::mat4 mvp);
+
     public:
         MeshRender();
         GLuint ShaderID = 0;

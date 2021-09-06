@@ -19,7 +19,7 @@ void WorldGeneration::GenerateWorld(void) {
 	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 	std::vector<std::future<GameObject*>> futures;
 	
-	int size = 16;
+	int size = 32;
 	int chunkSize = 8;
 
 	for(int x = -size; x < size; x++) {
