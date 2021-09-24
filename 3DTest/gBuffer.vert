@@ -14,13 +14,10 @@ out vec4 ShadowCoord;
 void main(){
 	vec3 wPos = worldPosition + aPos;
 	fragPos = wPos;
-	fragNormal = aNormal;
+	fragNormal =  aNormal;
 	fragNormalWS = fragNormal + wPos;
 	ShadowCoord = LightBiasMVP * vec4(aPos,1);
 
 	gl_Position = MVP * vec4(aPos,1);
-//	fragNormal = aNormal;
-//	fragPos = aPos * worldPosition;
-//	fragNormalWS = fragNormal + (aPos + worldPosition);
-//	gl_Position = MVP * vec4(aPos,1);
+
 }

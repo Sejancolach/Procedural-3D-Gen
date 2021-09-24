@@ -1,9 +1,10 @@
 #version 330 core
 
-layout(location = 0) in vec3 vertexPosition_modelspace;
+layout(location = 0) in vec3 aPos;
 uniform mat4 MVP;
+out vec2 TexCoords;
 
 void main(){
-	gl_Position = vec4(vertexPosition_modelspace,1);
-	
+	TexCoords = (aPos.xy+vec2(1,1))/2.0;
+	gl_Position = vec4(aPos,1);
 }

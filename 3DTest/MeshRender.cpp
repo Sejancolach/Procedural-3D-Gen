@@ -5,9 +5,9 @@
 
 bool Component::MeshRender::IsVisibleToCamera(glm::mat4 mvp) {
     glm::vec4 c = mvp * glm::vec4(gameObject->transform->getPosition(), 1);
-    return  (abs(c.x)-144) < c.w &&
-            (abs(c.y)-144) < c.w &&
-            (abs(c.z)-144) < c.w;
+    return  (abs(c.x)-192) < c.w &&
+            (abs(c.y)-192) < c.w &&
+            (abs(c.z)-192) < c.w;
 }
 
 Component::MeshRender::MeshRender() {
@@ -17,7 +17,10 @@ Component::MeshRender::MeshRender() {
 
 void Component::MeshRender::Render(glm::mat4 mvp, glm::mat4 depthBiasMVP) {
     if(!IsVisibleToCamera(mvp)) return;
-    glUseProgram(ShaderID);
+    if(lastUsedShader != ShaderID) {
+        glUseProgram(ShaderID);
+        lastUsedShader = ShaderID;
+    }
     if(Texture1Location == 0) {
         Texture1Location = glGetUniformLocation(ShaderID, "TextureSampler1");
         Texture2Location = glGetUniformLocation(ShaderID, "TextureSampler2");
@@ -62,8 +65,7 @@ void Component::MeshRender::Render(glm::mat4 mvp, glm::mat4 depthBiasMVP) {
 void Component::MeshRender::ShadowRender(glm::mat4 mvp) { 
     if(!IsVisibleToCamera(mvp)) return;
     mvp = mvp * gameObject->transform->getMatrix();
-    //glUseProgram(util::Shader::CompileShader("simpleDepthShader"));
-    glUniformMatrix4fv(glGetUniformLocation(util::Shader::CompileShader("simpleDepthShader"), "MVP"), 1, GL_FALSE, &mvp[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(DepthShaderID, "MVP"), 1, GL_FALSE, &mvp[0][0]);
 
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, mesh->vertexBuffer);
@@ -76,3 +78,5 @@ void Component::MeshRender::ShadowRender(glm::mat4 mvp) {
     }
     glDisableVertexAttribArray(0);
 }
+GLuint Component::MeshRender::lastUsedShader = 0xFFFF;
+GLuint Component::MeshRender::DepthShaderID = 0xFFFF;

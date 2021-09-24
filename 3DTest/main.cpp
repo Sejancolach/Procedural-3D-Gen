@@ -9,6 +9,8 @@ class Engine;
 int main(int argc, char* argv[]) {
 	GLint width = 1440;
 	GLint height = 810;
+    //width = 2560;
+    //height = 1080;
     GLFWwindow* window;
 
     Engine engine(width, height);

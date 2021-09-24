@@ -21,6 +21,9 @@ namespace Component {
         GLuint ShaderID = 0;
         GLuint TextureID = 0;
         GLuint TextureID2 = 0;
+        static GLuint DepthShaderID;
+        static GLuint lastUsedShader;
+
         Mesh *mesh;
         void Render(glm::mat4 mvp, glm::mat4 depthBiasMVP);
         void ShadowRender(glm::mat4 mvp);
