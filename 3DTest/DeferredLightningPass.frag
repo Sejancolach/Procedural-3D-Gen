@@ -38,7 +38,7 @@ const vec2 poissonDisk[POISSONDISKSIZE] = vec2[](
 );
 
 const float POISSON_DISK_BIAS = 0.00048828125;
-const float SHADOW_BIAS = 0.0025f;
+const float SHADOW_BIAS = 0.00025f;
 
 void main(){
 	vec3 FragPos = texture(gPosition, TexCoords).xyz;
@@ -54,7 +54,7 @@ void main(){
 	float visibility = 0.8f;
 	for (int i = 0; i < POISSONDISKSIZE; i++){
 	  if ( texture( ShadowMap, vec3(ShadowCoord.xy + poissonDisk[i] * POISSON_DISK_BIAS , (ShadowCoord.z - shadowBias)/ShadowCoord.w)) < .75f){
-		const float sbt = .6f / POISSONDISKSIZE;
+		const float sbt = .7f / POISSONDISKSIZE;
 		visibility -=sbt;
 	  }
 	}

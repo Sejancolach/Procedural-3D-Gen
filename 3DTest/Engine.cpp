@@ -317,9 +317,9 @@ void Engine::MainLoop(void) {
 
         // Compute the MVP matrix from the light's point of view
         const float dpmScale = 256;
-        glm::mat4 depthProjectionMatrix = glm::ortho<float>(-dpmScale, dpmScale, -dpmScale, dpmScale, 0, 1024);
+        glm::mat4 depthProjectionMatrix = glm::ortho<float>(-dpmScale, dpmScale, -dpmScale, dpmScale, 0, 1536);
         //glm::mat4 depthViewMatrix = glm::lookAt(lightInvDir, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-        glm::vec3 sunPos = position + glm::vec3(0, 192, -256);
+        glm::vec3 sunPos = position + glm::vec3(0, 192, -512);
         glm::vec3 sunViewDir = position + glm::vec3(0, 0, 0);
         sunViewDir = glm::floor(sunViewDir);
         sunViewDir.y = 0;
@@ -386,8 +386,8 @@ void Engine::MainLoop(void) {
         for(uint16_t i = 0; i < NR_LIGHTS; i++) {
             glUniform3fv(glGetUniformLocation(DeferredLightningPassID, ("lights[" + std::to_string(i) + "].Position").c_str()), 1, &lightPos[i][0]);
             glUniform3fv(glGetUniformLocation(DeferredLightningPassID, ("lights[" + std::to_string(i) + "].Color").c_str()), 1, &lightCol[i][0]);
-            const float linear = .00125f;
-            const float quadratic = .0025f;
+            const float linear = .0025f;
+            const float quadratic = .005f;
             glUniform1f(glGetUniformLocation(DeferredLightningPassID, ("lights[" + std::to_string(i) + "].Linear").c_str()), linear);
             glUniform1f(glGetUniformLocation(DeferredLightningPassID, ("lights[" + std::to_string(i) + "].Quadratic").c_str()), quadratic);
         }
@@ -434,19 +434,19 @@ void Engine::MainLoop(void) {
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
 
-        glViewport(0, 0, 256, 256);
-        glBindTexture(GL_TEXTURE_2D, gPosition);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-        glViewport(256, 0, 256, 256);
-        glBindTexture(GL_TEXTURE_2D, gNormal);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-        glViewport(512, 0, 256, 256);
-        glBindTexture(GL_TEXTURE_2D, gColor);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-        glViewport(768, 0, 256, 256);
-        glBindTexture(GL_TEXTURE_2D, ShadowRenderTexture);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-        glDepthFunc(GL_LESS);
+        //glViewport(0, 0, 256, 256);
+        //glBindTexture(GL_TEXTURE_2D, gPosition);
+        //glDrawArrays(GL_TRIANGLES, 0, 6);
+        //glViewport(256, 0, 256, 256);
+        //glBindTexture(GL_TEXTURE_2D, gNormal);
+        //glDrawArrays(GL_TRIANGLES, 0, 6);
+        //glViewport(512, 0, 256, 256);
+        //glBindTexture(GL_TEXTURE_2D, gColor);
+        //glDrawArrays(GL_TRIANGLES, 0, 6);
+        //glViewport(768, 0, 256, 256);
+        //glBindTexture(GL_TEXTURE_2D, ShadowRenderTexture);
+        //glDrawArrays(GL_TRIANGLES, 0, 6);
+        //glDepthFunc(GL_LESS);
 
         //glViewport(0, 0, width, height);
         //glBindTexture(GL_TEXTURE_2D, textureID);
