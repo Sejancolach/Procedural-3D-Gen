@@ -38,7 +38,7 @@ const vec2 poissonDisk[POISSONDISKSIZE] = vec2[](
 );
 
 const float POISSON_DISK_BIAS = 0.000030517578125;
-const float SHADOW_BIAS = 0.0001f;
+const float SHADOW_BIAS = 0.000125f;
 
 void main(){
 	vec3 FragPos = texture(gPosition, TexCoords).xyz;
