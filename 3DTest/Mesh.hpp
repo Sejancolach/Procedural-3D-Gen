@@ -12,7 +12,7 @@ class Mesh :
 public:
     std::vector<GLfloat> vertices;
     GLuint vertexBuffer = 0;
-    std::vector<unsigned short> indices; //max 65,535 triangles
+    std::vector<uint32_t> indices; //max 65,535 triangles
     GLuint indiceBuffer = 0;
     GLuint triangleCount = 0;
     std::vector<glm::vec3> colors;
@@ -23,7 +23,7 @@ public:
     bool CanUpdateBuffers = true;
 
     void SetVertices(const std::vector<GLfloat>& verts);
-    void SetIndices(const std::vector<unsigned short>& tris);
+    void SetIndices(const std::vector<uint32_t>& tris);
     void SetNormals(const std::vector<glm::vec3>& normals);
     void UpdateBuffers();
 
@@ -42,4 +42,4 @@ public:
 
 void AddVertices(std::vector<GLfloat>& nVert, float* v0, float* v1, float* v2);
 
-void AddIndices(std::vector<unsigned short>& nIndices, uint16_t idx, uint16_t idx2, uint16_t idx3);
+void AddIndices(std::vector<uint32_t>& nIndices, uint32_t idx, uint32_t idx2, uint32_t idx3);

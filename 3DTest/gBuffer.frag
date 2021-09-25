@@ -7,9 +7,7 @@ layout (location = 2) out vec3 gColor;
 in vec3 fragNormal;
 in vec3 fragNormalWS;
 in vec3 fragPos;
-in vec4 ShadowCoord;
 
-layout (location = 7) uniform sampler2DShadow shadowMap;
 layout (location = 8) uniform sampler2D TextureSampler1;
 layout (location = 9) uniform sampler2D TextureSampler2;
 
@@ -20,9 +18,9 @@ float map(float val, float l1, float h1, float l2, float h2){
 void main(){
 	float theta = clamp(map(dot(fragNormal,vec3(0,1,0)),.8,.9,0,1),0,1);
 	vec3 axisSign = sign(fragNormal);
-	vec2 xUV = fragNormalWS.zy;
-	vec2 yUV = fragNormalWS.xz;
-	vec2 zUV = fragNormalWS.xy;
+	vec2 xUV = fragNormalWS.zy*.25f;
+	vec2 yUV = fragNormalWS.xz*.25f;
+	vec2 zUV = fragNormalWS.xy*.25f;
 
 	vec3 xDiff = texture(TextureSampler1,xUV).rgb * theta
 				+texture(TextureSampler2,xUV).rgb * (1-theta);

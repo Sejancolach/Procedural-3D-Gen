@@ -19,13 +19,13 @@ void Mesh::SetVertices(const std::vector<GLfloat>& verts) {
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * 4, &vertices[0], GL_STATIC_DRAW);
 }
 
-void Mesh::SetIndices(const std::vector<unsigned short>& tris) {
+void Mesh::SetIndices(const std::vector<uint32_t>& tris) {
 	indices.clear();
 	indices = tris;
 	if(!CanUpdateBuffers) return;
 	glGenBuffers(1, &indiceBuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indiceBuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned short), &indices[0], GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(uint32_t), &indices[0], GL_STATIC_DRAW);
 }
 
 void Mesh::SetNormals(const std::vector<glm::vec3>& normals) {
@@ -46,7 +46,7 @@ void Mesh::UpdateBuffers() {
 	if(indices.size() > 0) {
 		glGenBuffers(1, &indiceBuffer);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indiceBuffer);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned short), &indices[0], GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(uint32_t), &indices[0], GL_STATIC_DRAW);
 	}
 	if(normals.size() > 0) {
 		glGenBuffers(1, &normalBuffer);
@@ -101,8 +101,8 @@ void Mesh::SmoothNormals(void) {
 
 void Mesh::Optimize(void) { 
 	std::vector<GLfloat> nVert;
-	std::unordered_set <unsigned short> duplicated;
-	std::vector<unsigned short> nIndices(indices);
+	std::unordered_set <uint32_t> duplicated;
+	std::vector<uint32_t> nIndices(indices);
 
 	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
@@ -140,7 +140,7 @@ void Mesh::Optimize(void) {
 	}
 	//std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-	unsigned short hInd = 0;
+	uint32_t hInd = 0;
 	std::vector<bool> mInd(nIndices.size());
 	std::vector<unsigned int> duplicatedSet;
 	for(int i = 0; i < nIndices.size(); i++) {
@@ -217,9 +217,9 @@ Mesh Mesh::CreatePrimitiveIcoSphere(float radius, uint8_t subdivision) {
 	vertices[i1+2] = -radius;
 
 	std::vector<float> nVert;
-	std::vector<uint16_t> nIndices;
+	std::vector<uint32_t> nIndices;
 	float* v0, * v1, * v2, * v3, * v4, * v11;
-	uint16_t idx = 0;
+	uint32_t idx = 0;
 	v0 = &vertices[0];
 	v11 = &vertices[11 * 3];
 	for(int i = 0; i <= 5; i++, idx+=12) {
@@ -244,7 +244,7 @@ Mesh Mesh::CreatePrimitiveIcoSphere(float radius, uint8_t subdivision) {
 	return mesh;
 }
 
-void AddIndices(std::vector<unsigned short>& nIndices, uint16_t i1, uint16_t i2, uint16_t i3) {
+void AddIndices(std::vector<uint32_t>& nIndices, uint32_t i1, uint32_t i2, uint32_t i3) {
 	nIndices.push_back(i1);
 	nIndices.push_back(i2);
 	nIndices.push_back(i3);
@@ -267,25 +267,26 @@ void AddVertices(std::vector<GLfloat>& nVert, float* v0, float* v1, float* v2) {
 Mesh Mesh::CreateFromAlgorithm(int dimension, int size, int detailLevel, std::function<float(float, float)> func, bool canUpdateBuffer) {
 	Mesh mesh;
 	mesh.CanUpdateBuffers = canUpdateBuffer;
-	std::vector<float> vertices((dimension * dimension + 1) * (detailLevel * detailLevel + 1) * 3);
-
 	bool dx = false;
 	float dl = 1.0f / detailLevel;
 	int i = 0;
 	int ox = 0;
 	float noiseScale = 1.0f / size;
 	int oxsize = dimension * detailLevel;
-	std::vector<uint16_t> indices(oxsize * oxsize * 6);
+	std::vector<float> vertices((oxsize + 1) * (oxsize + 1) * 3);
+	std::vector<uint32_t> indices(oxsize * oxsize * 6);
 
 	for(float x = 0; x <= dimension; x += dl) {
 		for(float z = 0; z <= dimension; z += dl) {
 			float rx = x * noiseScale, rz = z * noiseScale, rdl = dl * noiseScale;
 			vertices[i] = x;
 			vertices[i + 1] = func(rx, rz);
+			//vertices[i + 1] = 0;
 			vertices[i + 2] = z;
 			i += 3;
 		}
 	}
+	
 	for(int ti = 0, vi = 0, y = 0; y < oxsize; y++, vi++) {
 		for(int x = 0; x < oxsize; x++, ti += 6, vi++) {
 			indices[ti] = vi;
@@ -320,6 +321,16 @@ Mesh Mesh::CreateFromAlgorithm(int dimension, int size, int detailLevel, std::fu
 		normals[i] = glm::normalize(normals[i]);
 	}
 
+	//printf("vrts: %d inds: %d ns: %d\n", vertices.size(), indices.size(), normals.size());
+	//for(int i = 0; i < indices.size(); i += 3) {
+	//	printf(" %d -> %d %d %d\n", i / 3, indices[i], indices[i + 1], indices[i + 2]);
+	//	printf("   %d: %f %f %f\n", indices[i], vertices[indices[i] * 3], vertices[indices[i] * 3 + 1], vertices[indices[i] * 3 + 2]);
+	//	printf("   %d: %f %f %f\n", indices[i + 1], vertices[indices[i + 1] * 3], vertices[indices[i + 1] * 3 + 1], vertices[indices[i + 1] * 3 + 2]);
+	//	printf("   %d: %f %f %f\n", indices[i + 2], vertices[indices[i + 2] * 3], vertices[indices[i + 2] * 3 + 1], vertices[indices[i + 2] * 3 + 2]);
+	//}
+	//for(int i = 0; i < vertices.size(); i+=3) {
+	//	printf(" %d -> (x: %f y: %f z: %f)\n", i/3, vertices[i], vertices[i + 1], vertices[i + 2]);
+	//}
 
 	mesh.SetVertices(vertices);
 	mesh.SetIndices(indices);

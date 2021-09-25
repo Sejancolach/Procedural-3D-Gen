@@ -19,11 +19,11 @@ void WorldGeneration::GenerateWorld(void) {
 	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 	std::vector<std::future<GameObject*>> futures;
 	
-	int size = 32;
-	int chunkSize = 8;
+	int size = 4;
+	int chunkSize = 64;
 
-	for(int x = -size; x < size; x++) {
-		for(int y = -size; y < size; y++) {
+	for(int x = -size; x <= size; x++) {
+		for(int y = -size; y <= size; y++) {
 			futures.push_back(std::move(std::async(std::launch::async, WorldGeneration::GenerateChunk, x, y, chunkSize,*this)));
 		}
 	}

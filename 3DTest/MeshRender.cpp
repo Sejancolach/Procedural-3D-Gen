@@ -15,7 +15,7 @@ Component::MeshRender::MeshRender() {
     mesh = nullptr;
 }
 
-void Component::MeshRender::Render(glm::mat4 mvp, glm::mat4 depthBiasMVP) {
+void Component::MeshRender::Render(glm::mat4 mvp) {
     if(!IsVisibleToCamera(mvp)) return;
     if(lastUsedShader != ShaderID) {
         glUseProgram(ShaderID);
@@ -29,14 +29,12 @@ void Component::MeshRender::Render(glm::mat4 mvp, glm::mat4 depthBiasMVP) {
     }
 
     mvp = mvp * gameObject->transform->getMatrix();
-    depthBiasMVP = depthBiasMVP * gameObject->transform->getMatrix();
 
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, mesh->vertexBuffer);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
     glUniformMatrix4fv(glGetUniformLocation(ShaderID, "MVP"), 1, GL_FALSE, &mvp[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(ShaderID, "LightBiasMVP"), 1, GL_FALSE, &depthBiasMVP[0][0]);
     glm::vec3 pos = gameObject->transform->getPosition();
     glUniform3f(glGetUniformLocation(ShaderID, "worldPosition"), pos.x, pos.y, pos.z);
   
@@ -55,7 +53,7 @@ void Component::MeshRender::Render(glm::mat4 mvp, glm::mat4 depthBiasMVP) {
     }
     else {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->indiceBuffer);
-        glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_SHORT, (void*)0);
+        glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, (void*)0);
     }
     
     glDisableVertexAttribArray(0);
@@ -74,7 +72,7 @@ void Component::MeshRender::ShadowRender(glm::mat4 mvp) {
         glDrawArrays(GL_TRIANGLES, 0, mesh->triangleCount);
     } else {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->indiceBuffer);
-        glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_SHORT, (void*)0);
+        glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, (void*)0);
     }
     glDisableVertexAttribArray(0);
 }

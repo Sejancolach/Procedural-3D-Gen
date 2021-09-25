@@ -74,6 +74,7 @@ int Engine::InitOpenGL(void) {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
     glEnable(GL_ARB_framebuffer_object);
+    glfwSwapInterval(1); // enable vsync
     
     // ENABLE DEBUG OUTPUT
 
@@ -205,7 +206,7 @@ void Engine::MainLoop(void) {
 
 
     //SHADOW MAPPING
-    const float SHADOW_MAP_RESOLUTION = 8192;
+    const float SHADOW_MAP_RESOLUTION = 16384;
     GLuint ShadowFrameBuffer = 0;
     glGenFramebuffers(1, &ShadowFrameBuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, ShadowFrameBuffer);
@@ -253,8 +254,8 @@ void Engine::MainLoop(void) {
 
     for(uint16_t i = 0; i < NR_LIGHTS; i++) {
         const uint16_t seed = 0x4571;
-        float x = Mathf::Noise1DF(i,seed) * 256;
-        float z = Mathf::Noise1DF(i * 13,seed) * 256;
+        float x = Mathf::Noise1DF(i,seed) * 256+64;
+        float z = Mathf::Noise1DF(i * 13,seed) * 256+64;
         float y = (Mathf::SmoothOctaveNoise2D(x * 0.03125f * 0.125f, z * 0.03125f * 0.125f, 0x154, 32, 1.214f, .855f) * 320) + 4;
         lightPos.push_back(glm::vec3(x, y, z));
         x = (Mathf::Noise1DF(i * 7, seed)+1) * .25f + .5f;
@@ -316,7 +317,7 @@ void Engine::MainLoop(void) {
 
 
         // Compute the MVP matrix from the light's point of view
-        const float dpmScale = 256;
+        const float dpmScale = 384;
         glm::mat4 depthProjectionMatrix = glm::ortho<float>(-dpmScale, dpmScale, -dpmScale, dpmScale, 0, 1536);
         //glm::mat4 depthViewMatrix = glm::lookAt(lightInvDir, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
         glm::vec3 sunPos = position + glm::vec3(0, 192, -512);
@@ -346,7 +347,7 @@ void Engine::MainLoop(void) {
         //   -----------------
         //   === RENDERING ===
         //   -----------------
-        glDepthFunc(GL_LESS);
+        glDepthFunc(GL_LEQUAL);
 
         //   -- SHADOW MAP RENDER -- 
         glBindFramebuffer(GL_FRAMEBUFFER, ShadowFrameBuffer);
@@ -356,7 +357,7 @@ void Engine::MainLoop(void) {
         glUseProgram(DepthShaderID);
         sceneManager.ShadowRender(depthMVP);
 
-        //   -- MAIN CAMERA RENDER -- 
+        //   -- MAIN CAMERA RENDER --         
         glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -368,7 +369,7 @@ void Engine::MainLoop(void) {
         glUseProgram(programID);
         glActiveTexture(GL_TEXTURE7);
         glBindTexture(GL_TEXTURE_2D, ShadowRenderTexture);
-        sceneManager.Render(mvp,depthBiasMVP);
+        sceneManager.Render(mvp);
 
         //   -- Deferred Lightning Pass --
         glBindFramebuffer(GL_FRAMEBUFFER, 0);

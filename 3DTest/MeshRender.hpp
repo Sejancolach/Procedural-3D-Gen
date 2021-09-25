@@ -25,7 +25,7 @@ namespace Component {
         static GLuint lastUsedShader;
 
         Mesh *mesh;
-        void Render(glm::mat4 mvp, glm::mat4 depthBiasMVP);
+        void Render(glm::mat4 mvp);
         void ShadowRender(glm::mat4 mvp);
     };
 }

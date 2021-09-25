@@ -37,8 +37,8 @@ const vec2 poissonDisk[POISSONDISKSIZE] = vec2[](
   vec2( 0.64495938, 0.79387760 )
 );
 
-const float POISSON_DISK_BIAS = 0.00048828125;
-const float SHADOW_BIAS = 0.00025f;
+const float POISSON_DISK_BIAS = 0.000030517578125;
+const float SHADOW_BIAS = 0.0001f;
 
 void main(){
 	vec3 FragPos = texture(gPosition, TexCoords).xyz;
@@ -58,6 +58,7 @@ void main(){
 		visibility -=sbt;
 	  }
 	}
+
 	vec3 lightning = Diffuse * visibility;
 
 	vec3 viewDir = normalize(viewPos - FragPos);

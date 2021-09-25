@@ -14,8 +14,8 @@ void SceneManager::Update(void) {
     currentScene->Update();
 }
 
-void SceneManager::Render(glm::mat4x4 mvp, glm::mat4 depthBiasMVP) {
-    currentScene->Render(mvp, depthBiasMVP);
+void SceneManager::Render(glm::mat4x4 mvp) {
+    currentScene->Render(mvp);
 }
 
 void SceneManager::ShadowRender(glm::mat4 mvp) {
