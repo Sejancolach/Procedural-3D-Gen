@@ -6,7 +6,6 @@
 bool Component::MeshRender::IsVisibleToCamera(glm::mat4 mvp) {
     glm::vec4 c = mvp * glm::vec4(gameObject->transform->getPosition(), 1);
     return  (abs(c.x)-192) < c.w &&
-            (abs(c.y)-192) < c.w &&
             (abs(c.z)-192) < c.w;
 }
 
@@ -19,6 +18,10 @@ void Component::MeshRender::Render(glm::mat4 mvp) {
     if(!IsVisibleToCamera(mvp)) return;
     if(lastUsedShader != ShaderID) {
         glUseProgram(ShaderID);
+        glActiveTexture(GL_TEXTURE8);
+        glBindTexture(GL_TEXTURE_2D, TextureID);
+        glActiveTexture(GL_TEXTURE9);
+        glBindTexture(GL_TEXTURE_2D, TextureID2);
         lastUsedShader = ShaderID;
     }
     if(Texture1Location == 0) {
@@ -30,7 +33,7 @@ void Component::MeshRender::Render(glm::mat4 mvp) {
 
     mvp = mvp * gameObject->transform->getMatrix();
 
-    glEnableVertexAttribArray(0);
+    //glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, mesh->vertexBuffer);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
@@ -39,14 +42,10 @@ void Component::MeshRender::Render(glm::mat4 mvp) {
     glUniform3f(glGetUniformLocation(ShaderID, "worldPosition"), pos.x, pos.y, pos.z);
   
     if(!mesh->normals.empty()) {
-        glEnableVertexAttribArray(1);
+        //glEnableVertexAttribArray(1);
         glBindBuffer(GL_ARRAY_BUFFER, mesh->normalBuffer);
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_TRUE, 0, (void*)0);
     }
-    glActiveTexture(GL_TEXTURE8);
-    glBindTexture(GL_TEXTURE_2D, TextureID);
-    glActiveTexture(GL_TEXTURE9);
-    glBindTexture(GL_TEXTURE_2D, TextureID2);
 
     if(mesh->indices.empty()) {
         glDrawArrays(GL_TRIANGLES, 0, mesh->triangleCount);
@@ -56,8 +55,8 @@ void Component::MeshRender::Render(glm::mat4 mvp) {
         glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, (void*)0);
     }
     
-    glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
+    //glDisableVertexAttribArray(0);
+    //glDisableVertexAttribArray(1);
 }
 
 void Component::MeshRender::ShadowRender(glm::mat4 mvp) { 

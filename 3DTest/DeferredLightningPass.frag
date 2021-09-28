@@ -17,6 +17,7 @@ struct Light{
 };
 const int NR_LIGHTS = 127;
 uniform Light lights[NR_LIGHTS];
+//change from array to storing it in a texture
 
 uniform vec3 viewPos;
 
@@ -37,7 +38,7 @@ const vec2 poissonDisk[POISSONDISKSIZE] = vec2[](
   vec2( 0.64495938, 0.79387760 )
 );
 
-const float POISSON_DISK_BIAS = 0.000030517578125;
+const float POISSON_DISK_BIAS = 0.0000152587890625;
 const float SHADOW_BIAS = 0.000125f;
 
 void main(){
@@ -51,12 +52,14 @@ void main(){
 	shadowBias = clamp(shadowBias,0, SHADOW_BIAS * 4);
 	vec4 ShadowCoord = ShadowMapMVP * vec4(FragPos,1);
 
-	float visibility = 0.8f;
-	for (int i = 0; i < POISSONDISKSIZE; i++){
-	  if ( texture( ShadowMap, vec3(ShadowCoord.xy + poissonDisk[i] * POISSON_DISK_BIAS , (ShadowCoord.z - shadowBias)/ShadowCoord.w)) < .75f){
-		const float sbt = .7f / POISSONDISKSIZE;
-		visibility -=sbt;
-	  }
+	float visibility = 1f;
+	if (ShadowCoord.x < 1 && ShadowCoord.x > 0 && ShadowCoord.y < 1 && ShadowCoord.y > 0){
+		for (int i = 0; i < POISSONDISKSIZE; i++){
+		  if ( texture( ShadowMap, vec3(ShadowCoord.xy + poissonDisk[i] * POISSON_DISK_BIAS , (ShadowCoord.z - shadowBias)/ShadowCoord.w)) < .75f){
+			const float sbt = .7f / POISSONDISKSIZE;
+			visibility -=sbt;
+		  }
+		}
 	}
 
 	vec3 lightning = Diffuse * visibility;

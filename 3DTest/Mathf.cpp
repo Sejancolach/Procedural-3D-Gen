@@ -66,8 +66,8 @@ namespace Mathf {
 			total += SmoothNoise2DF((x1+offsetX) * detail, (y1+offsetY) * detail, seed) * amplitude;
 			detail *= lacunarity;
 			amplitude *= persistence;
-			offsetX += detail * amplitude;
-			offsetY += (lacunarity + offsetX) * amplitude;
+			offsetX += Noise1DF(detail * PRIME1,seed)*512;
+			offsetY += Noise1DF(detail * PRIME2,seed)*512;
 		}
 		total /= octaves;
 		return total;

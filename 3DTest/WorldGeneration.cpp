@@ -19,7 +19,7 @@ void WorldGeneration::GenerateWorld(void) {
 	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 	std::vector<std::future<GameObject*>> futures;
 	
-	int size = 4;
+	int size = 16;
 	int chunkSize = 64;
 
 	for(int x = -size; x <= size; x++) {
@@ -51,14 +51,14 @@ GameObject* WorldGeneration::GenerateChunk(int posX, int posY, int size, const W
 
 	float nSize = 256;
 	float halfSize = size / nSize;
-	int detailLevel = 8;
+	int detailLevel = 2;
 	uint16_t octaves = 32;
 	uint32_t seed = 0x154;
 	float lacunarity = 1.214f;
 	//float lacunarity = 1.354f;
 	//float lacunarity = 1.3754f;
 	float persistence = .855f;
-	float multiplier = 320.0f;
+	float multiplier = 512.0f;
 	Mesh* mesh = new Mesh(Mesh::CreateFromAlgorithm(size, nSize, detailLevel,
 						  [&](float x, float y) -> float {
 							  return Mathf::SmoothOctaveNoise2D(x + posX * halfSize, y + posY * halfSize, seed, octaves, lacunarity, persistence) * multiplier;
@@ -70,7 +70,7 @@ GameObject* WorldGeneration::GenerateChunk(int posX, int posY, int size, const W
 	//					  },
 	//					  false)); // <-- disable buffer updating, can only be done on the main thread
 	mesh->SmoothNormals();
-	chunk->transform->SetPosition(glm::vec3(posX * size, 0, posY * size));
+	chunk->transform->SetPosition(glm::vec3(posX * size + halfSize, 0, posY * size + halfSize));
 	mRender->mesh = mesh;
 	chunk->AddComponent(mRender);
 	return chunk;

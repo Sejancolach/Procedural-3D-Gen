@@ -155,7 +155,7 @@ void Engine::MainLoop(void) {
     glGenFramebuffers(1, &gBuffer);
     glBindBuffer(GL_FRAMEBUFFER, gBuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
-    GLuint gPosition, gNormal, gColor;
+    GLuint gPosition = 0, gNormal = 0, gColor = 0;
     // - position
     glGenTextures(1, &gPosition);
     glBindTexture(GL_TEXTURE_2D, gPosition);
@@ -166,7 +166,6 @@ void Engine::MainLoop(void) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
-
     // - normal
     glGenTextures(1, &gNormal);
     glBindTexture(GL_TEXTURE_2D, gNormal);
@@ -188,7 +187,6 @@ void Engine::MainLoop(void) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gColor, 0);
-
     unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
     glDrawBuffers(3, attachments);
 
@@ -210,7 +208,6 @@ void Engine::MainLoop(void) {
     GLuint ShadowFrameBuffer = 0;
     glGenFramebuffers(1, &ShadowFrameBuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, ShadowFrameBuffer);
-
     GLuint ShadowRenderTexture = 0;
     glGenTextures(1, &ShadowRenderTexture);
     glBindTexture(GL_TEXTURE_2D, ShadowRenderTexture);
@@ -238,7 +235,7 @@ void Engine::MainLoop(void) {
      1.0f, -1.0f, 0.0f,
     -1.0f,  1.0f, 0.0f,
     };
-
+    printf("6\n");
     GLuint quad_vertexbuffer;
     glGenBuffers(1, &quad_vertexbuffer);
     glBindBuffer(GL_ARRAY_BUFFER, quad_vertexbuffer);
@@ -254,9 +251,9 @@ void Engine::MainLoop(void) {
 
     for(uint16_t i = 0; i < NR_LIGHTS; i++) {
         const uint16_t seed = 0x4571;
-        float x = Mathf::Noise1DF(i,seed) * 256+64;
-        float z = Mathf::Noise1DF(i * 13,seed) * 256+64;
-        float y = (Mathf::SmoothOctaveNoise2D(x * 0.03125f * 0.125f, z * 0.03125f * 0.125f, 0x154, 32, 1.214f, .855f) * 320) + 4;
+        float x = Mathf::Noise1DF(i,seed) * 512+64;
+        float z = Mathf::Noise1DF(i * 13,seed) * 512+64;
+        float y = (Mathf::SmoothOctaveNoise2D(x * 0.03125f * 0.125f, z * 0.03125f * 0.125f, 0x154, 32, 1.214f, .855f) * 512) + 4;
         lightPos.push_back(glm::vec3(x, y, z));
         x = (Mathf::Noise1DF(i * 7, seed)+1) * .25f + .5f;
         y = (Mathf::Noise1DF(i * 7+1, seed)+1) * .25f + .5f;
@@ -317,15 +314,15 @@ void Engine::MainLoop(void) {
 
 
         // Compute the MVP matrix from the light's point of view
-        const float dpmScale = 384;
-        glm::mat4 depthProjectionMatrix = glm::ortho<float>(-dpmScale, dpmScale, -dpmScale, dpmScale, 0, 1536);
+        const float dpmScale = 512;
+        glm::mat4 depthProjectionMatrix = glm::ortho<float>(-dpmScale, dpmScale, -dpmScale, dpmScale, 0, 4096);
         //glm::mat4 depthViewMatrix = glm::lookAt(lightInvDir, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-        glm::vec3 sunPos = position + glm::vec3(0, 192, -512);
+        glm::vec3 sunPos = position + glm::vec3(0, 768, -2048);
         glm::vec3 sunViewDir = position + glm::vec3(0, 0, 0);
         sunViewDir = glm::floor(sunViewDir);
         sunViewDir.y = 0;
         sunPos = glm::floor(sunPos);
-        sunPos.y = 192;
+        sunPos.y = 768;
         glm::mat4 depthViewMatrix = glm::lookAt(
             sunPos,
             sunViewDir,
@@ -369,7 +366,11 @@ void Engine::MainLoop(void) {
         glUseProgram(programID);
         glActiveTexture(GL_TEXTURE7);
         glBindTexture(GL_TEXTURE_2D, ShadowRenderTexture);
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
         sceneManager.Render(mvp);
+        glDisableVertexAttribArray(0);
+        glDisableVertexAttribArray(1);
 
         //   -- Deferred Lightning Pass --
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -387,8 +388,10 @@ void Engine::MainLoop(void) {
         for(uint16_t i = 0; i < NR_LIGHTS; i++) {
             glUniform3fv(glGetUniformLocation(DeferredLightningPassID, ("lights[" + std::to_string(i) + "].Position").c_str()), 1, &lightPos[i][0]);
             glUniform3fv(glGetUniformLocation(DeferredLightningPassID, ("lights[" + std::to_string(i) + "].Color").c_str()), 1, &lightCol[i][0]);
-            const float linear = .0025f;
-            const float quadratic = .005f;
+            //const float linear = .0025f;
+            //const float quadratic = .005f;
+            const float linear = .00125f;
+            const float quadratic = .0025f;
             glUniform1f(glGetUniformLocation(DeferredLightningPassID, ("lights[" + std::to_string(i) + "].Linear").c_str()), linear);
             glUniform1f(glGetUniformLocation(DeferredLightningPassID, ("lights[" + std::to_string(i) + "].Quadratic").c_str()), quadratic);
         }
@@ -447,8 +450,8 @@ void Engine::MainLoop(void) {
         //glViewport(768, 0, 256, 256);
         //glBindTexture(GL_TEXTURE_2D, ShadowRenderTexture);
         //glDrawArrays(GL_TRIANGLES, 0, 6);
+        
         //glDepthFunc(GL_LESS);
-
         //glViewport(0, 0, width, height);
         //glBindTexture(GL_TEXTURE_2D, textureID);
         //for(uint16_t i = 0; i < NR_LIGHTS; i++) {
