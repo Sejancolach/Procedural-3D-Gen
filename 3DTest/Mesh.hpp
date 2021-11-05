@@ -28,7 +28,7 @@ public:
     void UpdateBuffers();
 
     void RecalculateNormals(void);
-    void SmoothNormals(void);
+    void SmoothNormals(int repeat, float factor);
     void Optimize(void);
 
     static Mesh CreatePrimitiveBox(float size);

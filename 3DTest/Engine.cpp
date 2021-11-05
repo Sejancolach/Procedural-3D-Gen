@@ -14,11 +14,13 @@
 #include "Mathf.hpp"
 #include "SceneManager.hpp"
 #include "WorldGeneration.hpp"
+#include "Camera.h"
 
 class Transform;
 class util::Shader;
 class Engine;
 class Mesh;
+class Camera;
 namespace Component {
     class MeshRender;
 }
@@ -74,8 +76,11 @@ int Engine::InitOpenGL(void) {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
     glEnable(GL_ARB_framebuffer_object);
+    glEnable(GL_LINE_SMOOTH);
+    
     glfwSwapInterval(1); // enable vsync
     
+
     // ENABLE DEBUG OUTPUT
 
     //glEnable(GL_DEBUG_OUTPUT);
@@ -131,6 +136,10 @@ void Engine::MainLoop(void) {
     glm::mat4 mvp = Projection * View * Model; // Remember, matrix multiplication is the other way around
     // position
     glm::vec3 position = glm::vec3(20, 40, 128);
+
+    GameObject MainCamera;
+    MainCamera.AddBehaviour(new Camera(60.0f));
+
     // horizontal angle : toward -Z
     float horizontalAngle = 3.14f;
     // vertical angle : 0, look at the horizon
@@ -279,6 +288,14 @@ void Engine::MainLoop(void) {
     glUniform1i(glGetUniformLocation(VolumetricScatteringPass, "gColor"), 2);
     glUniform1i(glGetUniformLocation(VolumetricScatteringPass, "ShadowMap"), 7);
 
+
+
+    GameObject gBox;
+    Mesh gBoxMesh = Mesh::CreatePrimitiveBox(16.0f);
+    gBox.AddComponent(new Component::MeshRender())->mesh = &gBoxMesh;
+    gBox.transform->SetPosition({ 0,64,0 });
+    Component::MeshRender::DebugDrawMesh = &gBoxMesh;
+
     do {
         double currentTime = glfwGetTime();
         double xpos, ypos;
@@ -311,7 +328,7 @@ void Engine::MainLoop(void) {
             position + direction, // and looks here : at the same position, plus "direction"
             up                  // Head is up (set to 0,-1,0 to look upside-down)
         );
-
+        MainCamera.transform->SetPosition(position);
 
         // Compute the MVP matrix from the light's point of view
         const float dpmScale = 512;
@@ -341,6 +358,15 @@ void Engine::MainLoop(void) {
 
         glm::vec3 depthViewRight = glm::vec3(1,0,0);
         glm::vec3 depthViewUp = glm::vec3(depthViewMatrix[2][0], depthViewMatrix[2][1], depthViewMatrix[2][2]);
+
+        // -------------------------
+        // === Update The Scence ===
+        // -------------------------
+
+        sceneManager.Update();
+        sceneManager.LateUpdate();
+
+
         //   -----------------
         //   === RENDERING ===
         //   -----------------
@@ -353,7 +379,6 @@ void Engine::MainLoop(void) {
 
         glUseProgram(DepthShaderID);
         sceneManager.ShadowRender(depthMVP);
-
         //   -- MAIN CAMERA RENDER --         
         glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
         glViewport(0, 0, width, height);
@@ -361,8 +386,6 @@ void Engine::MainLoop(void) {
 
         glm::mat4 mvp = Projection * View * Model;
 
-        sceneManager.Update();
-        sceneManager.LateUpdate();
         glUseProgram(programID);
         glActiveTexture(GL_TEXTURE7);
         glBindTexture(GL_TEXTURE_2D, ShadowRenderTexture);
@@ -423,7 +446,8 @@ void Engine::MainLoop(void) {
         //glUseProgram(VolumetricScatteringPass);
 
 
-        // -- Show the RenderTextures (DEBUG) --
+        //Render the final Image
+
         glDepthFunc(GL_ALWAYS);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -438,6 +462,7 @@ void Engine::MainLoop(void) {
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
 
+        // -- Show the RenderTextures (DEBUG) --
         //glViewport(0, 0, 256, 256);
         //glBindTexture(GL_TEXTURE_2D, gPosition);
         //glDrawArrays(GL_TRIANGLES, 0, 6);

@@ -35,11 +35,12 @@ public:
     GameObject();
     GameObject(GameObject* parent);
     template<typename T>
-    Component::Component* GetComponent(void);
-    Component::Component* AddComponent(Component::Component* comp);
+    T* GetComponent(void);
+    template <typename T>
+    T* AddComponent(T* comp);
 
     template<typename T>
-    Behaviour* GetBehaviour(void);
+    T* GetBehaviour(void);
     Behaviour* AddBehaviour(Behaviour* bev);
 
     std::string name;
@@ -60,7 +61,7 @@ public:
     const glm::mat4x4& getTransformMatrix(void);
 };
 template<typename T>
-inline Component::Component* GameObject::GetComponent() {
+inline T* GameObject::GetComponent() {
     for(auto& comp : components)     {
         if(dynamic_cast<T*>(comp))
             return dynamic_cast<T*>(comp);
@@ -69,10 +70,17 @@ inline Component::Component* GameObject::GetComponent() {
 }
 
 template<typename T>
-inline Behaviour* GameObject::GetBehaviour(void) {
+inline T* GameObject::GetBehaviour(void) {
     for(auto& bev : behaviours) {
         if(dynamic_cast<T*>(bev))
             return dynamic_cast<T*>(bev);
     }
     return nullptr;
+}
+
+template <typename T>
+T* GameObject::AddComponent(T* comp) {
+    components.push_back(comp);
+    comp->gameObject = this;
+    return comp;
 }

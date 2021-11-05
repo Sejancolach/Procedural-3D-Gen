@@ -8,6 +8,7 @@
 #include <set>
 #include <unordered_set>
 #include <map>
+#include "Timer.hpp"
 
 void Mesh::SetVertices(const std::vector<GLfloat>& verts) {
 	vertices.clear();
@@ -74,16 +75,16 @@ void Mesh::RecalculateNormals(void) {
 	SetNormals(normals);
 }
 
-void Mesh::SmoothNormals(void) { 
+void Mesh::SmoothNormals(int repeat, float factor) { 
 	static const float oneOverThree = 1.f / 3.f;
 	std::vector<glm::vec3> newNormals(normals);
-	for(int k = 0; k < 4; k++) {
+	for(int k = 0; k < repeat; k++) {
 		for(int i = 0, j = 0; i < indices.size() / 3; i++) {
 			glm::vec3 smoothedNormal{0,0,0};
 			smoothedNormal += newNormals[indices[j]];
 			smoothedNormal += newNormals[indices[j + 1]];
 			smoothedNormal += newNormals[indices[j + 2]];
-			smoothedNormal *= oneOverThree;
+			smoothedNormal *= oneOverThree * factor;
 			newNormals[indices[j]] += smoothedNormal;
 			newNormals[indices[j + 1]] += smoothedNormal;
 			newNormals[indices[j + 2]] += smoothedNormal;
@@ -177,6 +178,18 @@ void Mesh::Optimize(void) {
 	SetVertices(nVert);
 	SetIndices(nIndices);
 	RecalculateNormals();
+}
+
+Mesh Mesh::CreatePrimitiveBox(float size) {
+	Mesh mesh;
+	size = size / 2;
+	const std::vector<GLfloat> vert = {-size,size,-size,size,size,-size,-size,-size,-size,size,-size,-size,-size,size,size,size,size,size,-size,-size,size,size,-size,size };
+	//const std::vector<uint32_t> ind = { 0,1,2,2,1,3,4,0,6,6,0,2,7,5,6,6,5,4,3,1,7,7,1,5,4,5,0,0,5,1,3,7,2,2,7,6 };
+	const std::vector<uint32_t> ind = { 2,1,0,3,1,2,6,0,4,2,0,6,6,5,7,4,5,6,7,1,3,5,1,7,0,5,4,1,5,0,2,7,3,6,7,2 };
+	mesh.SetVertices(vert);
+	mesh.SetIndices(ind);
+	mesh.RecalculateNormals();
+	return mesh;
 }
 
 Mesh Mesh::CreatePrimitiveIcoSphere(float radius, uint8_t subdivision) {
@@ -281,7 +294,6 @@ Mesh Mesh::CreateFromAlgorithm(int dimension, int size, int detailLevel, std::fu
 			float rx = x * noiseScale, rz = z * noiseScale, rdl = dl * noiseScale;
 			vertices[i] = x;
 			vertices[i + 1] = func(rx, rz);
-			//vertices[i + 1] = 0;
 			vertices[i + 2] = z;
 			i += 3;
 		}
@@ -295,7 +307,6 @@ Mesh Mesh::CreateFromAlgorithm(int dimension, int size, int detailLevel, std::fu
 			indices[ti + 5] = vi + oxsize + 2;
 		}
 	}
-
 	std::vector<glm::vec3> normals(vertices.size() / 3);
 
 	int nsize = sqrt( normals.size());
@@ -320,7 +331,6 @@ Mesh Mesh::CreateFromAlgorithm(int dimension, int size, int detailLevel, std::fu
 	for(int i = 0; i < vertices.size() / 3; i++) {
 		normals[i] = glm::normalize(normals[i]);
 	}
-
 	//printf("vrts: %d inds: %d ns: %d\n", vertices.size(), indices.size(), normals.size());
 	//for(int i = 0; i < indices.size(); i += 3) {
 	//	printf(" %d -> %d %d %d\n", i / 3, indices[i], indices[i + 1], indices[i + 2]);

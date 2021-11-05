@@ -24,11 +24,6 @@ GameObject::GameObject(GameObject* parent) {
 	
 }
 
-Component::Component* GameObject::AddComponent(Component::Component* comp) {
-	components.push_back(comp);
-	comp->gameObject = this;
-	return comp;
-}
 
 Behaviour* GameObject::AddBehaviour(Behaviour* bev) {
 	behaviours.push_back(bev);
@@ -65,11 +60,14 @@ void GameObject::Update(void) {
 	for(int i = 0; i < behaviours.size(); i++) {
 		behaviours[i]->Update();
 	}
+	for(int i = 0; i < children.size(); i++) {
+		children[i]->Update();
+	}
 }
 
 void GameObject::Render(glm::mat4x4 mvp) {
 	if(!isActive) return; //if not active don't render object or children
-	Component::MeshRender* mRender = static_cast<Component::MeshRender*>(GetComponent<Component::MeshRender>());
+	Component::MeshRender* mRender = dynamic_cast<Component::MeshRender*>(GetComponent<Component::MeshRender>());
 
 	if(mRender != nullptr) {
 		mRender->Render(mvp);
@@ -82,7 +80,7 @@ void GameObject::Render(glm::mat4x4 mvp) {
 
 void GameObject::ShadowRender(glm::mat4 mvp) { 
 	if(!isActive) return; //if not active don't render object or children
-	Component::MeshRender* mRender = static_cast<Component::MeshRender*>(GetComponent<Component::MeshRender>());
+	Component::MeshRender* mRender = dynamic_cast<Component::MeshRender*>(GetComponent<Component::MeshRender>());
 
 	if(mRender != nullptr) {
 		mRender->ShadowRender(mvp);
@@ -96,6 +94,9 @@ void GameObject::ShadowRender(glm::mat4 mvp) {
 void GameObject::LateUpdate(void) { 
 	for(int i = 0; i < behaviours.size(); i++) {
 		behaviours[i]->LateUpdate();
+	}
+	for(int i = 0; i < children.size(); i++) {
+		children[i]->LateUpdate();
 	}
 }
 

@@ -11,14 +11,13 @@ namespace Component {
     class Transform :
         public Component {
 
-    private:
+    public:
         glm::vec3 m_pos;
         glm::quat m_rot;
         glm::vec3 m_scale;
 
         glm::mat4 matrix;
 
-        void UpdateMatrix();
     public:
         Transform();
         Transform(const glm::vec3& pos, const glm::quat& rot, const glm::vec3& scale);
@@ -27,6 +26,9 @@ namespace Component {
         void AddPosition(const glm::vec3& pos);
         glm::vec3 getPosition(void);
         glm::mat4 getMatrix(void);
+
+    private:
+        void UpdateMatrix();
     };
 }
 

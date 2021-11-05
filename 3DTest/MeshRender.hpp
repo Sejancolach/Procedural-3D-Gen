@@ -25,7 +25,10 @@ namespace Component {
         static GLuint lastUsedShader;
 
         Mesh *mesh;
+        static Mesh* DebugDrawMesh;
+        bool DrawBBDMesh = false;
         void Render(glm::mat4 mvp);
         void ShadowRender(glm::mat4 mvp);
     };
+
 }

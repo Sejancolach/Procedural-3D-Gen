@@ -112,6 +112,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>C:\Users\sejan\source\repos\libs\glew-2.1.0\include;C:\Users\sejan\source\repos\libs\glfw-3.3.4.bin.WIN64\include;C:\Users\sejan\source\repos\libs\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -146,6 +147,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>C:\Users\sejan\source\repos\libs\glew-2.1.0\include;C:\Users\sejan\source\repos\libs\glfw-3.3.4.bin.WIN64\include;C:\Users\sejan\source\repos\libs\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -156,6 +158,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="GameObject.cpp" />
@@ -165,6 +168,7 @@
     <ClCompile Include="MeshRender.cpp" />
     <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="Timer.cpp" />
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="WorldGeneration.cpp" />
   </ItemGroup>
@@ -184,6 +188,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Behaviour.hpp" />
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="Component.hpp" />
     <ClInclude Include="Engine.hpp" />
     <ClInclude Include="GameObject.hpp" />
@@ -194,6 +199,7 @@
     <ClInclude Include="SceneManager.hpp" />
     <ClInclude Include="Shader.hpp" />
     <ClInclude Include="Time.hpp" />
+    <ClInclude Include="Timer.hpp" />
     <ClInclude Include="Transform.hpp" />
     <ClInclude Include="WorldGeneration.hpp" />
   </ItemGroup>
