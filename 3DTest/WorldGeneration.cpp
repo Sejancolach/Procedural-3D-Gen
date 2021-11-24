@@ -9,7 +9,7 @@
 #include <chrono>
 #include <iostream>
 #include "Timer.hpp"
-#include "Camera.h"
+#include "Camera.hpp"
 
 namespace Component {
 	class Transform;
@@ -46,7 +46,7 @@ void WorldGeneration::GenerateWorld(void) {
 void WorldGeneration::Update() { 
 	//Take Camera Position and check if new chunks need to be generated
 	int halfSize = chunkSize * .5f;
-	int renderDistance = 8;
+	int renderDistance = 16;
 	Camera* cam =  Camera::main;
 	glm::vec3 camPos = cam->gameobject->transform->getPosition();
 	glm::vec3 chunkPos = glm::floor(camPos / (float)chunkSize);
@@ -78,6 +78,7 @@ void WorldGeneration::Update() {
 }
 
 GameObject* WorldGeneration::GenerateChunk(int posX, int posY, int size) { 
+	Debug::ScopedTimer("chunk");
 	GameObject* chunk = new GameObject();
 	chunk->isActive = false;
 	Component::MeshRender* mRender = new Component::MeshRender();

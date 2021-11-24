@@ -20,9 +20,12 @@ uniform Light lights[NR_LIGHTS];
 //change from array to storing it in a texture
 
 uniform vec3 viewPos;
+uniform mat4 viewProjection;
+uniform mat4 viewView;
 
 uniform mat4 ShadowMapMVP;
 uniform vec3 sunViewDir;
+uniform vec3 sunPos;
 uniform mat4 MVP;
 
 //Shadow mapping
@@ -37,14 +40,35 @@ const vec2 poissonDisk[POISSONDISKSIZE] = vec2[](
   vec2( -0.34184101, -0.092938870 ),
   vec2( 0.64495938, 0.79387760 )
 );
+const vec4 ditherPattern[4] = vec4[](
+vec4( 0.0f, 0.5f, 0.125f, 0.625f),
+vec4( 0.75f, 0.22f, 0.875f, 0.375f),
+vec4( 0.1875f, 0.6875f, 0.0625f, 0.5625),
+vec4( 0.9375f, 0.4375f, 0.8125f, 0.3125));
 
 const float POISSON_DISK_BIAS = 0.0000152587890625;
 const float SHADOW_BIAS = 0.000125f;
+
+
+
+const float G_SCATTERING = 0.00001f;
+const float PI = 3.14159265359;
+
+float ComputeScattering(float lightDotView) {
+	float result = 1.0f - G_SCATTERING * G_SCATTERING;
+	result /= (4.0f * PI * pow(1.0f + G_SCATTERING * G_SCATTERING - (2.0f * G_SCATTERING) * lightDotView, 1.5f));
+	return result;
+}
+
+
 
 void main(){
 	vec3 FragPos = texture(gPosition, TexCoords).xyz;
 	vec3 Normal  = texture(gNormal, TexCoords).xyz;
 	vec3 Diffuse = texture(gColor, TexCoords).rgb;
+
+	vec2 rTexCoords = TexCoords * 2 - vec2(1,1);
+	ivec2 screenSpacePosition = ivec2(rTexCoords.x * 1440, rTexCoords.y * 810);
 
 	//Shadow calculation
 	float cosTheta = clamp(dot(Normal,sunViewDir),0,1);
@@ -73,6 +97,43 @@ void main(){
 		float attentuation = 1.0 / (1.0 + lights[i].Linear * dist + lights[i].Quadratic * dist * dist);
 		diffuse *= attentuation;
 		lightning += diffuse;
+
 	}
-	FragColor = vec4(lightning, 1.0);
+
+	const int fogSteps = 128;
+	const float fogDensity = .75f;
+	const float Weight = .025f;
+	const float Decay = .995f;
+
+	vec4 SSSunPos = (viewProjection * viewView) * vec4(sunPos,1);
+	SSSunPos.x /= SSSunPos.w;
+	SSSunPos.y /= SSSunPos.w;
+	SSSunPos.z /= SSSunPos.w;
+	SSSunPos.w = 1;
+
+	vec3 sPos = viewPos;
+	vec3 rayVector = FragPos.xyz - sPos;
+	float rayLength = length(rayVector);
+	vec3 rayDir = rayVector / rayLength;
+	float stepLength = rayLength / fogSteps;
+	vec3 rstep = rayDir * stepLength;
+	vec3 cPos = sPos;
+	vec3 accFog = vec3(0,0,0);
+	float illuminationDecay = 1.0f;
+	float ditherValue = ditherPattern[screenSpacePosition.x % 4][screenSpacePosition.y % 4];
+
+	sPos += ditherValue;
+	for (int i = 0; i < fogSteps; i++){
+		vec4 SCS = ShadowMapMVP  * vec4(cPos,1);
+		SCS /= SCS.w;
+		float smv = texture(ShadowMap, vec3(SCS.xyz));
+		if (smv > SCS.z){
+			accFog += ComputeScattering(dot(rayDir,sunViewDir)) * vec3(1,1,1) * illuminationDecay;
+		}
+		cPos += rstep;
+		illuminationDecay *= Decay;
+	}
+	accFog /= float(fogSteps)*(1 - fogDensity);
+
+	FragColor = vec4(lightning, 1.0) + vec4(accFog,0);
 }

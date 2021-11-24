@@ -7,8 +7,13 @@
 class Engine { 
 private:
 	int width, height;
-	int InitOpenGL(void);
-
+	GLuint gBuffer;
+	GLuint gPosition, gNormal, gColor;
+	GLuint DepthRenderBuffer;
+	GLuint ShadowFrameBuffer;
+	GLuint ShadowRenderTexture;
+	GLuint DeferredLightningPassID;
+	GLuint VolumetricScatteringPass;
 public:
 	GLFWwindow* window;
 	Engine(int width, int height);
@@ -17,6 +22,11 @@ public:
 	void MainLoop(void);
 
 	GLFWwindow* GetWindow(void);
-
+private:
+	int InitOpenGL(void);
+	void CreateGBufferRenderTextures(void);
+	void CreateShadowRenderTexture(const int shadowResolution);
+	void CreateRenderPasses(void);
+	void DebugShowRenderTextures(void);
 };
 

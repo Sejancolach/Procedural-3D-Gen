@@ -5,8 +5,8 @@
 
 bool Component::MeshRender::IsVisibleToCamera(glm::mat4 mvp) {
     glm::vec4 c = mvp * glm::vec4(gameObject->transform->getPosition(), 1);
-    return  (abs(c.x)-192) < c.w &&
-            (abs(c.z)-192) < c.w;
+    return  (abs(c.x)-256) < c.w &&
+            (abs(c.z)-256) < c.w;
 }
 
 Component::MeshRender::MeshRender() {
@@ -56,8 +56,8 @@ void Component::MeshRender::Render(glm::mat4 mvp) {
     }
     
     if(DrawBBDMesh) {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        mvp = mvp * glm::scale(glm::vec3{ 4.0f, 16.0f, 4.0f });
+        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        mvp = mvp * glm::scale(glm::vec3{ 1.0f, 1.0f, 1.0f });
         glUniformMatrix4fv(glGetUniformLocation(ShaderID, "MVP"), 1, GL_FALSE, &mvp[0][0]);
         glBindBuffer(GL_ARRAY_BUFFER, DebugDrawMesh->vertexBuffer);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
@@ -65,7 +65,7 @@ void Component::MeshRender::Render(glm::mat4 mvp) {
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_TRUE, 0, (void*)0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, DebugDrawMesh->indiceBuffer);
         glDrawElements(GL_TRIANGLES, DebugDrawMesh->indices.size(), GL_UNSIGNED_INT, (void*)0);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
     //glDisableVertexAttribArray(0);
@@ -85,6 +85,16 @@ void Component::MeshRender::ShadowRender(glm::mat4 mvp) {
     } else {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->indiceBuffer);
         glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, (void*)0);
+    }
+    if(DrawBBDMesh) {
+        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        mvp = mvp * glm::scale(glm::vec3{ 1.0f, 1.0f, 1.0f });
+        glUniformMatrix4fv(glGetUniformLocation(ShaderID, "MVP"), 1, GL_FALSE, &mvp[0][0]);
+        glBindBuffer(GL_ARRAY_BUFFER, DebugDrawMesh->vertexBuffer);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, DebugDrawMesh->indiceBuffer);
+        glDrawElements(GL_TRIANGLES, DebugDrawMesh->indices.size(), GL_UNSIGNED_INT, (void*)0);
+        //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
     glDisableVertexAttribArray(0);
 }

@@ -23,7 +23,7 @@ private:
 	std::unordered_map<std::pair<int,int>, GameObject*, pair_hash> chunks;
 	std::queue<std::future<GameObject*>> newChunks;
 
-	int chunkSize = 64;
+	int chunkSize = 32;
 
 public:
 	GLuint shaderID;
