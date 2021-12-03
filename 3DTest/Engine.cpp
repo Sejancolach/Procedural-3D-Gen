@@ -15,6 +15,7 @@
 #include "SceneManager.hpp"
 #include "WorldGeneration.hpp"
 #include "Camera.hpp"
+#include "Timer.hpp"
 
 class Transform;
 class util::Shader;
@@ -201,8 +202,11 @@ void Engine::MainLoop(void) {
         lightCol.push_back(glm::vec3(x, y, z));
     }
 
+    float pastTime = 0;
 
     do {
+        pastTime += deltaTime;
+        //Debug::ScopedTimer mainLoopTimer("Main Loop Time");
         double currentTime = glfwGetTime();
         double xpos, ypos;
         glfwGetCursorPos(this->window, &xpos, &ypos);
@@ -240,6 +244,7 @@ void Engine::MainLoop(void) {
         glm::mat4 depthProjectionMatrix = glm::ortho<float>(-dpmScale, dpmScale, -dpmScale, dpmScale, 0, 4096);
         //glm::mat4 depthViewMatrix = glm::lookAt(lightInvDir, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
         glm::vec3 sunPos = position + glm::vec3(64, 512, -2048);
+        //glm::vec3 sunPos = position + glm::vec3(64 + sinf(pastTime*.1f) * 512, 512, -2048 + cosf(pastTime*.1f) * 512);
         //gBox.transform->SetPosition(position + glm::vec3(16,128,-512));
         glm::vec3 sunViewDir = position + glm::vec3(0, 0, 0);
         sunViewDir = glm::floor(sunViewDir);
@@ -326,7 +331,7 @@ void Engine::MainLoop(void) {
         glUniform3fv(glGetUniformLocation(DeferredLightningPassID, "viewPos"), 1, &position[0]);
         glUniformMatrix4fv(glGetUniformLocation(DeferredLightningPassID, "viewProjection"), 1, GL_FALSE,&Projection[0][0]);
         glUniformMatrix4fv(glGetUniformLocation(DeferredLightningPassID, "viewView"), 1, GL_FALSE,&View[0][0]);
-        glUniform3fv(glGetUniformLocation(DeferredLightningPassID, "sunViewDir"), 1, &sunViewDir[0]);
+        glUniform3fv(glGetUniformLocation(DeferredLightningPassID, "sunViewDir"), 1, &glm::normalize(sunViewDir)[0]);
         glUniform3fv(glGetUniformLocation(DeferredLightningPassID, "sunPos"), 1, &sunPos[0]);
         glUniformMatrix4fv(glGetUniformLocation(DeferredLightningPassID, "ShadowMapMVP"), 1, GL_FALSE, &depthBiasMVP[0][0]);
         glUniformMatrix4fv(glGetUniformLocation(DeferredLightningPassID, "MVP"), 1, GL_FALSE, &mvp[0][0]);
@@ -367,7 +372,7 @@ void Engine::MainLoop(void) {
 
 
         // -- Show the RenderTextures --
-        // DebugShowRenderTextures();
+        DebugShowRenderTextures();
         
         glDisableVertexAttribArray(0);
 
@@ -512,7 +517,7 @@ void Engine::CreateGBufferRenderTextures(void) {
     // - color
     glGenTextures(1, &gColor);
     glBindTexture(GL_TEXTURE_2D, gColor);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB10, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA12, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

@@ -21,7 +21,8 @@ namespace Mathf {
 	float Noise2DF(int32_t x, int32_t y, uint32_t seed);
 	float SmoothNoise2DF(float x1, float y1, uint32_t seed);
 	float SmoothOctaveNoise2D(float x1, float y1, uint32_t seed, uint16_t octaves, float lacunarity, float persistence);
-	
+	float FastSmoothOctaveNoise2D(float x1, float y1, uint32_t seed, uint16_t octaves, float lacunarity, float persistence);
+
 	uint32_t Noise3D(int32_t x, int32_t y, int32_t z, uint32_t seed);
 	float Noise3DF(int32_t x, int32_t y, int32_t z, uint32_t seed);
 	
@@ -34,5 +35,6 @@ namespace Mathf {
 
 	float NormalizeNoiseValue(uint32_t val);
 	float easeInOutCubic(float x);
+	float FastEaseInOutCubic(float x);
 	float easeInOutCirc(float x);
 }

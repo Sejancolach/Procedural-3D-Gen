@@ -1,5 +1,5 @@
 #include "SceneManager.hpp"
-
+#include "Timer.hpp"
 
 SceneManager::SceneManager() { 
     SceneManagerinstance = this;
@@ -15,10 +15,12 @@ void SceneManager::Update(void) {
 }
 
 void SceneManager::Render(glm::mat4x4 mvp) {
+    //Debug::ScopedTimer st("Main Render");
     currentScene->Render(mvp);
 }
 
 void SceneManager::ShadowRender(glm::mat4 mvp) {
+    //Debug::ScopedTimer st("Shadow Render");
     currentScene->ShadowRender(mvp);
 }
 

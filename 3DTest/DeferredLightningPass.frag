@@ -40,13 +40,14 @@ const vec2 poissonDisk[POISSONDISKSIZE] = vec2[](
   vec2( -0.34184101, -0.092938870 ),
   vec2( 0.64495938, 0.79387760 )
 );
+const float POISSON_DISK_BIAS = 0.0000152587890625;
+
 const vec4 ditherPattern[4] = vec4[](
 vec4( 0.0f, 0.5f, 0.125f, 0.625f),
 vec4( 0.75f, 0.22f, 0.875f, 0.375f),
 vec4( 0.1875f, 0.6875f, 0.0625f, 0.5625),
 vec4( 0.9375f, 0.4375f, 0.8125f, 0.3125));
 
-const float POISSON_DISK_BIAS = 0.0000152587890625;
 const float SHADOW_BIAS = 0.000125f;
 
 
@@ -79,15 +80,14 @@ void main(){
 	float visibility = 1f;
 	if (ShadowCoord.x < 1 && ShadowCoord.x > 0 && ShadowCoord.y < 1 && ShadowCoord.y > 0){
 		for (int i = 0; i < POISSONDISKSIZE; i++){
-		  if ( texture( ShadowMap, vec3(ShadowCoord.xy + poissonDisk[i] * POISSON_DISK_BIAS , (ShadowCoord.z - shadowBias)/ShadowCoord.w)) < .75f){
-			const float sbt = .7f / POISSONDISKSIZE;
+		  if ( texture( ShadowMap, vec3(ShadowCoord.xy + poissonDisk[i] * POISSON_DISK_BIAS , (ShadowCoord.z - shadowBias)/ShadowCoord.w)) < .5f){
+			const float sbt = .8f / POISSONDISKSIZE;
 			visibility -=sbt;
 		  }
 		}
 	}
 
 	vec3 lightning = Diffuse * visibility;
-
 	vec3 viewDir = normalize(viewPos - FragPos);
 	for (int i = 0; i < NR_LIGHTS; i++){
 		vec3 lightDir = normalize(lights[i].Position - FragPos);
@@ -100,7 +100,7 @@ void main(){
 
 	}
 
-	const int fogSteps = 128;
+	const int fogSteps = 256;
 	const float fogDensity = .75f;
 	const float Weight = .025f;
 	const float Decay = .995f;

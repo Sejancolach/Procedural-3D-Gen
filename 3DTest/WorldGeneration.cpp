@@ -26,6 +26,7 @@ void WorldGeneration::GenerateWorld(void) {
 	for(int x = -size; x <= size; x++) {
 		for(int y = -size; y <= size; y++) {
 			futures.push_back(std::move(std::async(std::launch::async, WorldGeneration::GenerateChunk, x, y, chunkSize)));
+			//futures.push_back(std::move(std::async(std::launch::deferred, WorldGeneration::GenerateChunk, x, y, chunkSize)));
 		}
 	}
 
@@ -46,7 +47,7 @@ void WorldGeneration::GenerateWorld(void) {
 void WorldGeneration::Update() { 
 	//Take Camera Position and check if new chunks need to be generated
 	int halfSize = chunkSize * .5f;
-	int renderDistance = 16;
+	int renderDistance = 6;
 	Camera* cam =  Camera::main;
 	glm::vec3 camPos = cam->gameobject->transform->getPosition();
 	glm::vec3 chunkPos = glm::floor(camPos / (float)chunkSize);
@@ -78,7 +79,7 @@ void WorldGeneration::Update() {
 }
 
 GameObject* WorldGeneration::GenerateChunk(int posX, int posY, int size) { 
-	Debug::ScopedTimer("chunk");
+	//auto _T = Debug::ScopedTimer("chunk");
 	GameObject* chunk = new GameObject();
 	chunk->isActive = false;
 	Component::MeshRender* mRender = new Component::MeshRender();
@@ -94,7 +95,7 @@ GameObject* WorldGeneration::GenerateChunk(int posX, int posY, int size) {
 	float multiplier = 512.0f;
 	Mesh* mesh = new Mesh(Mesh::CreateFromAlgorithm(size, nSize, detailLevel,
 						  [&](float x, float y) -> float {
-							  return Mathf::SmoothOctaveNoise2D(x + posX * halfSize, y + posY * halfSize, seed, octaves, lacunarity, persistence) * multiplier;
+							  return Mathf::FastSmoothOctaveNoise2D(x + posX * halfSize, y + posY * halfSize, seed, octaves, lacunarity, persistence) * multiplier;
 						  },
 						  false)); // <-- disable buffer updating, can only be done on the main thread
 	//Mesh* mesh = new Mesh(Mesh::CreateFromAlgorithm(size, nSize, detailLevel,

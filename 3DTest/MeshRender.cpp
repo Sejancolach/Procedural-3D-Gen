@@ -5,8 +5,8 @@
 
 bool Component::MeshRender::IsVisibleToCamera(glm::mat4 mvp) {
     glm::vec4 c = mvp * glm::vec4(gameObject->transform->getPosition(), 1);
-    return  (abs(c.x)-256) < c.w &&
-            (abs(c.z)-256) < c.w;
+    return  (abs(c.x)-512) < c.w &&
+            (abs(c.z)-512) < c.w;
 }
 
 Component::MeshRender::MeshRender() {
