@@ -151,10 +151,10 @@ void Engine::MainLoop(void) {
     // Initial Field of View
     float initialFoV = 60.0f;
 
-    float slowslowSpeed = 0.5f;
-    float slowSpeed = 10.0f;
-    float maxSpeed = 100.0f;
-    float speed = 100.0f;
+    float slowslowSpeed = 5.0f;
+    float slowSpeed = 25.0f;
+    float maxSpeed = 500.0f;
+    float speed = slowSpeed;
     float mouseSpeed = 0.05f;
     float deltaTime = .0f;
     int fpscount = 0;
@@ -163,7 +163,7 @@ void Engine::MainLoop(void) {
     //              ------------------------
     //              === DEFERRED SHADING ===
     //              ------------------------
-    const float SHADOW_MAP_RESOLUTION = 16384;
+    const int32_t SHADOW_MAP_RESOLUTION = 16384;
 
     CreateGBufferRenderTextures();
     CreateShadowRenderTexture(SHADOW_MAP_RESOLUTION);
@@ -204,6 +204,21 @@ void Engine::MainLoop(void) {
 
     float pastTime = 0;
 
+
+    GameObject testObject;
+    testObject.transform->m_scale = { 8,8,8 };
+    testObject.transform->SetPosition( { 4,-123,4 });
+    Mesh _toMeshD = Mesh::CreatePrimitiveBox(1);
+    {
+        Mesh *mesh = new Mesh( Mesh::LoadOBJ("./models/TreeTest.obj"));
+        //Mesh *mesh = new Mesh( Mesh::LoadOBJ("./models/testModel.obj"));
+        Component::MeshRender *mr = testObject.AddComponent(new Component::MeshRender());
+        mr->mesh = mesh;
+        //mr->mesh = &_toMeshD;
+        //mr->ShaderID = programID;
+    }
+
+
     do {
         pastTime += deltaTime;
         //Debug::ScopedTimer mainLoopTimer("Main Loop Time");
@@ -230,7 +245,7 @@ void Engine::MainLoop(void) {
         HandleMovement(window, position, direction, deltaTime, speed, right, up);
 
         float FoV = initialFoV;
-        Projection = glm::perspective(glm::radians(FoV), 16.0f / 9.0f, 0.001f, 1024.0f);
+        Projection = glm::perspective(glm::radians(FoV), 16.0f / 9.0f, 0.001f, 4096.0f);
         // Camera matrix
         View = glm::lookAt(
             position,           // Camera is here
@@ -240,7 +255,7 @@ void Engine::MainLoop(void) {
         MainCamera.transform->SetPosition(position);
 
         // Compute the MVP matrix from the light's point of view
-        const float dpmScale = 512;
+        const float dpmScale = 2048;
         glm::mat4 depthProjectionMatrix = glm::ortho<float>(-dpmScale, dpmScale, -dpmScale, dpmScale, 0, 4096);
         //glm::mat4 depthViewMatrix = glm::lookAt(lightInvDir, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
         glm::vec3 sunPos = position + glm::vec3(64, 512, -2048);
@@ -302,7 +317,9 @@ void Engine::MainLoop(void) {
         glBindTexture(GL_TEXTURE_2D, ShadowRenderTexture);
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
+
         sceneManager.Render(mvp);
+
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
 
@@ -372,7 +389,7 @@ void Engine::MainLoop(void) {
 
 
         // -- Show the RenderTextures --
-        DebugShowRenderTextures();
+        //DebugShowRenderTextures();
         
         glDisableVertexAttribArray(0);
 

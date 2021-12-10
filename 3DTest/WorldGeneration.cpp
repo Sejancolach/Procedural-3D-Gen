@@ -21,7 +21,7 @@ void WorldGeneration::GenerateWorld(void) {
 	auto _scpT = Debug::ScopedTimer("World Generator", Debug::kMilli);
 
 	std::vector<std::future<GameObject*>> futures;
-	int size = 3;
+	int size = 9;
 	const int halfSize = chunkSize * .5f;
 	for(int x = -size; x <= size; x++) {
 		for(int y = -size; y <= size; y++) {
@@ -47,7 +47,7 @@ void WorldGeneration::GenerateWorld(void) {
 void WorldGeneration::Update() { 
 	//Take Camera Position and check if new chunks need to be generated
 	int halfSize = chunkSize * .5f;
-	int renderDistance = 6;
+	int renderDistance = 16;
 	Camera* cam =  Camera::main;
 	glm::vec3 camPos = cam->gameobject->transform->getPosition();
 	glm::vec3 chunkPos = glm::floor(camPos / (float)chunkSize);
@@ -58,6 +58,7 @@ void WorldGeneration::Update() {
 				int nx = chunkPos.x + x;
 				int nz = chunkPos.z + z;
 				newChunks.push(std::move(std::async(std::launch::async, WorldGeneration::GenerateChunk, nx, nz, chunkSize)));
+				//newChunks.push(std::move(std::async(std::launch::deferred, WorldGeneration::GenerateChunk, nx, nz, chunkSize)));
 				newChunks.back().wait_for(std::chrono::seconds(0));
 				chunks[std::pair<int, int>(nx, nz)] = nullptr;
 			}
@@ -83,19 +84,23 @@ GameObject* WorldGeneration::GenerateChunk(int posX, int posY, int size) {
 	GameObject* chunk = new GameObject();
 	chunk->isActive = false;
 	Component::MeshRender* mRender = new Component::MeshRender();
-	float nSize = 256;
+	float nSize = 512;
 	float halfSize = size / nSize;
-	int detailLevel = 2;
-	uint16_t octaves = 32;
+	int detailLevel = 1;
+	uint16_t octaves = 64;
 	uint32_t seed = 0x154;
 	float lacunarity = 1.214f;
 	//float lacunarity = 1.354f;
 	//float lacunarity = 1.3754f;
-	float persistence = .855f;
-	float multiplier = 512.0f;
+	float persistence = .875f;
+	float multiplier = 1024.0f;
+	float multiplier2 = 4096.0f;
+	float n2SM = 0.25f;
+	uint16_t n2Octaves = 8;
 	Mesh* mesh = new Mesh(Mesh::CreateFromAlgorithm(size, nSize, detailLevel,
 						  [&](float x, float y) -> float {
-							  return Mathf::FastSmoothOctaveNoise2D(x + posX * halfSize, y + posY * halfSize, seed, octaves, lacunarity, persistence) * multiplier;
+							  return ((Mathf::FastSmoothOctaveNoise2D(x + posX * halfSize, y + posY * halfSize, seed, octaves, lacunarity, persistence) * multiplier)
+								  + (Mathf::Sigmoid((Mathf::FastSmoothOctaveNoise2D((x + 0x754 + posX * halfSize) * n2SM, (y + 0x1478 + posY * halfSize) * n2SM, seed+0x147, n2Octaves, lacunarity, persistence,false))) * 2 - 1) * multiplier2);
 						  },
 						  false)); // <-- disable buffer updating, can only be done on the main thread
 	//Mesh* mesh = new Mesh(Mesh::CreateFromAlgorithm(size, nSize, detailLevel,

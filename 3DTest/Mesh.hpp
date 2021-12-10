@@ -5,6 +5,7 @@
 #include <glm/ext/vector_float2.hpp>
 #include <GL/glew.h>
 #include <functional>
+#include "Material.hpp"
 class Object;
 
 class Mesh :
@@ -12,19 +13,24 @@ class Mesh :
 public:
     std::vector<GLfloat> vertices;
     GLuint vertexBuffer = 0;
-    std::vector<uint32_t> indices; //max 65,535 triangles
-    GLuint indiceBuffer = 0;
+    std::vector<std::vector<uint32_t>> indices; 
+    std::vector<Material> materials;
+    GLuint *indiceBuffer;
     GLuint triangleCount = 0;
     std::vector<glm::vec3> colors;
     std::vector<glm::vec3> normals;
     GLuint normalBuffer;
     std::vector<glm::vec2> uvs;
+    GLuint uvBuffer;
 
     bool CanUpdateBuffers = true;
 
     void SetVertices(const std::vector<GLfloat>& verts);
-    void SetIndices(const std::vector<uint32_t>& tris);
+    void SetIndice(const std::vector<uint32_t>& tris, int idx);
+    void SetIndices(const std::vector<std::vector<uint32_t>>& tris);
+    void AddIndices(const std::vector<uint32_t>& tris);
     void SetNormals(const std::vector<glm::vec3>& normals);
+    void SetUVs(const std::vector<glm::vec2>& uvs);
     void UpdateBuffers();
 
     void RecalculateNormals(void);
@@ -38,8 +44,8 @@ public:
     static Mesh CreatePrimitiveIcoSphere(float radius, uint8_t subdivision = 1);
 
     static Mesh CreateFromAlgorithm(int dimension, int size, int detailLevel, std::function<float (float,float)> func, bool canUpdateBuffer = true);
+
+    static Mesh LoadOBJ(std::string path);
 };
 
 void AddVertices(std::vector<GLfloat>& nVert, float* v0, float* v1, float* v2);
-
-void AddIndices(std::vector<uint32_t>& nIndices, uint32_t idx, uint32_t idx2, uint32_t idx3);

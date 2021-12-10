@@ -32,27 +32,21 @@ void Component::MeshRender::Render(glm::mat4 mvp) {
     }
 
     mvp = mvp * gameObject->transform->getMatrix();
+    glUniform3f(glGetUniformLocation(ShaderID, "diffuseColor"), .8f,.6f,.5f);
+    for(int i = 0; i < mesh->indices.size(); i++) {
+        glBindBuffer(GL_ARRAY_BUFFER, mesh->vertexBuffer);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-    //glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->vertexBuffer);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
-    glUniformMatrix4fv(glGetUniformLocation(ShaderID, "MVP"), 1, GL_FALSE, &mvp[0][0]);
-    glm::vec3 pos = gameObject->transform->getPosition();
-    glUniform3f(glGetUniformLocation(ShaderID, "worldPosition"), pos.x, pos.y, pos.z);
-  
-    if(!mesh->normals.empty()) {
-        //glEnableVertexAttribArray(1);
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->normalBuffer);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_TRUE, 0, (void*)0);
-    }
-
-    if(mesh->indices.empty()) {
-        glDrawArrays(GL_TRIANGLES, 0, mesh->triangleCount);
-    }
-    else {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->indiceBuffer);
-        glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, (void*)0);
+        glUniformMatrix4fv(glGetUniformLocation(ShaderID, "MVP"), 1, GL_FALSE, &mvp[0][0]);
+        glm::vec3 pos = gameObject->transform->getPosition();
+        glUniform3f(glGetUniformLocation(ShaderID, "worldPosition"), pos.x, pos.y, pos.z);
+        if(!mesh->normals.empty()) {
+            glBindBuffer(GL_ARRAY_BUFFER, mesh->normalBuffer);
+            glVertexAttribPointer(1, 3, GL_FLOAT, GL_TRUE, 0, (void*)0);
+        }
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->indiceBuffer[i]);
+        glDrawElements(GL_TRIANGLES, mesh->indices[i].size(), GL_UNSIGNED_INT, (void*)0);
+        glUniform3f(glGetUniformLocation(ShaderID, "diffuseColor"), .6f, .85f, .65f);
     }
     
     if(DrawBBDMesh) {
@@ -63,37 +57,34 @@ void Component::MeshRender::Render(glm::mat4 mvp) {
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
         glBindBuffer(GL_ARRAY_BUFFER, DebugDrawMesh->normalBuffer);
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_TRUE, 0, (void*)0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, DebugDrawMesh->indiceBuffer);
-        glDrawElements(GL_TRIANGLES, DebugDrawMesh->indices.size(), GL_UNSIGNED_INT, (void*)0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, DebugDrawMesh->indiceBuffer[0]);
+        glDrawElements(GL_TRIANGLES, DebugDrawMesh->indices[0].size(), GL_UNSIGNED_INT, (void*)0);
         //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
-
-    //glDisableVertexAttribArray(0);
-    //glDisableVertexAttribArray(1);
 }
 
 void Component::MeshRender::ShadowRender(glm::mat4 mvp) { 
     if(!IsVisibleToCamera(mvp)) return;
-    mvp = mvp * gameObject->transform->getMatrix();
-    glUniformMatrix4fv(glGetUniformLocation(DepthShaderID, "MVP"), 1, GL_FALSE, &mvp[0][0]);
 
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->vertexBuffer);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-    if(mesh->indices.empty()) {
-        glDrawArrays(GL_TRIANGLES, 0, mesh->triangleCount);
-    } else {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->indiceBuffer);
-        glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, (void*)0);
+    mvp = mvp * gameObject->transform->getMatrix();
+    for(int i = 0; i < mesh->indices.size(); i++) {
+        glUniformMatrix4fv(glGetUniformLocation(DepthShaderID, "MVP"), 1, GL_FALSE, &mvp[0][0]);
+
+        glEnableVertexAttribArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, mesh->vertexBuffer);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->indiceBuffer[i]);
+        glDrawElements(GL_TRIANGLES, mesh->indices[i].size(), GL_UNSIGNED_INT, (void*)0);
     }
+
     if(DrawBBDMesh) {
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         mvp = mvp * glm::scale(glm::vec3{ 1.0f, 1.0f, 1.0f });
         glUniformMatrix4fv(glGetUniformLocation(ShaderID, "MVP"), 1, GL_FALSE, &mvp[0][0]);
         glBindBuffer(GL_ARRAY_BUFFER, DebugDrawMesh->vertexBuffer);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, DebugDrawMesh->indiceBuffer);
-        glDrawElements(GL_TRIANGLES, DebugDrawMesh->indices.size(), GL_UNSIGNED_INT, (void*)0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, DebugDrawMesh->indiceBuffer[0]);
+        glDrawElements(GL_TRIANGLES, DebugDrawMesh->indices[0].size(), GL_UNSIGNED_INT, (void*)0);
         //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
     glDisableVertexAttribArray(0);

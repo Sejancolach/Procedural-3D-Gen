@@ -118,7 +118,7 @@ void main(){
 	float stepLength = rayLength / fogSteps;
 	vec3 rstep = rayDir * stepLength;
 	vec3 cPos = sPos;
-	vec3 accFog = vec3(0,0,0);
+	vec3 accFog = vec3(-1,-1,-1);
 	float illuminationDecay = 1.0f;
 	float ditherValue = ditherPattern[screenSpacePosition.x % 4][screenSpacePosition.y % 4];
 

@@ -78,7 +78,7 @@ namespace Mathf {
 		return total;
 	}
 
-	float FastSmoothOctaveNoise2D(float x1, float y1, uint32_t seed, uint16_t octaves, float lacunarity, float persistence) {
+	float FastSmoothOctaveNoise2D(float x1, float y1, uint32_t seed, uint16_t octaves, float lacunarity, float persistence, bool useEase) {
 		float total = 0.0f;
 		float detail = 1.0f;
 		float amplitude = 1.0f;
@@ -102,7 +102,7 @@ namespace Mathf {
 			float t = l(xyr(_fx, _cy, _cx,_x),
 						xyr(_fx, _fy, _cx,_x),
 						_cy - _y);
-			total += FastEaseInOutCubic(t) * amplitude;
+			total += (useEase ? FastEaseInOutCubic(t) : t) * amplitude;
 			detail *= lacunarity;
 			amplitude *= persistence;
 			offsetX += Noise1DF(detail * PRIME1, seed) * 512;
@@ -179,4 +179,8 @@ namespace Mathf {
 			(std::sqrtf(1 - pow(-2 * x + 2, 2)) + 1) / 2;
 	}
 
-}
+	float Sigmoid(float x) {
+		return 1 / (1 + exp(-x));
+	}
+
+}	

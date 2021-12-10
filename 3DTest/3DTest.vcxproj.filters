@@ -69,6 +69,9 @@
     <ClCompile Include="Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="simple.vert">
@@ -106,6 +109,12 @@
     </None>
     <None Include="DeferredLightningPass.frag">
       <Filter>Resource Files\Shader\PostProcess</Filter>
+    </None>
+    <None Include="Unlit.vert">
+      <Filter>Resource Files\Shader</Filter>
+    </None>
+    <None Include="Unlit.frag">
+      <Filter>Resource Files\Shader</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -152,6 +161,9 @@
       <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="Camera.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

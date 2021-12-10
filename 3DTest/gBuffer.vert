@@ -12,7 +12,7 @@ out vec3 fragPos;
 void main(){
 	vec3 wPos = (worldPosition + aPos);
 	fragPos = (wPos);
-	fragNormal = normalize( aNormal);
+	fragNormal = ( aNormal);
 	fragNormalWS = (fragNormal + wPos);
 
 	gl_Position = MVP * vec4(aPos,1);
